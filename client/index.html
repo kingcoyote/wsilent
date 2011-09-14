@@ -128,6 +128,8 @@
 				      $('#splash .notice')
 				          .css('display', 'block')
 				          .text('You were disconnected from server "' + reason + '"');
+			        $('#splash .server-info')
+			            .css('display', 'none');
 				      setTimeout(function() {
 				        $('#splash .server-info a').click();
 				      }, 2000)
