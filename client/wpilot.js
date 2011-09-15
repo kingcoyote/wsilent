@@ -109,10 +109,10 @@ var CLIENT_DISCONNECTED     = 0,
     CLIENT_CONNECTED        = 2;
 
 // Powerup constants
-var POWERUP_FONT            = '7px Arial',
-    POWERUP_SPREAD_COLOR     = '230,21,90',
-    POWERUP_RAPID_COLOR     = '166,219,0',
-    POWERUP_RICO_COLOR    = '51,182,255';
+var POWERUP_FONT            = '7px Arial', //WEAPON
+    POWERUP_SPREAD_COLOR     = '230,21,90', //WEAPON
+    POWERUP_RAPID_COLOR     = '166,219,0', //WEAPON
+    POWERUP_RICO_COLOR    = '51,182,255'; //WEAPON
 
 var HUD_FONT = [WEIGHT_HEAVY, SIZE_XLARGE, FONT_NAME].join(' ');
 
@@ -949,8 +949,8 @@ World.prototype.on_player_spawn = function(player, pos) {
 World.prototype.on_player_fire = function(player, angle) {
   var volume = player.is_me ? 1 : calculate_sfx_volume(this.client,
                                                        player.entity.pos);
-  this.client.sound.play('bullet_spawn', volume);
-};
+  this.client.sound.play('bullet_spawn', volume); // WEAPON
+
 
 /**
  * Callback for player died
@@ -1065,7 +1065,7 @@ World.prototype.on_after_init = function() {
   this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
   this.PACKET_HANDLERS[OP_PLAYER_SPAWN] = this.spawn_player;
   this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
-  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon;
+  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; // WEAPON
   this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
   this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
   this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
@@ -1885,7 +1885,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   ctx.arc(0, 0, 108, 0, Math.PI / 180, true);
   ctx.stroke();
 
-  if (me.has_powerup(POWERUP_SPREAD)) {
+  if (me.has_powerup(POWERUP_SPREAD)) { // WEAPON
     var powerup = me.powerup_timers[POWERUP_SPREAD];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
@@ -1897,7 +1897,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.stroke();
   }
 
-  if (me.has_powerup(POWERUP_RAPID)) {
+  if (me.has_powerup(POWERUP_RAPID)) { // WEAPON
     var powerup = me.powerup_timers[POWERUP_RAPID];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
@@ -1909,7 +1909,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.stroke();
   }
 
-  if (me.has_powerup(POWERUP_RICO)) {
+  if (me.has_powerup(POWERUP_RICO)) { // WEAPON
     var powerup = me.powerup_timers[POWERUP_RICO];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
@@ -2370,10 +2370,10 @@ GUIPrompt.prototype.draw = function(ctx) {
   draw_label(ctx, text_pos, 4, this.buffer + PROMPT_CURSOR);
 };
 
-function get_powerup_color(type) {
+function get_powerup_color(type) { // WEAPON
   switch (type) {
 
-    case POWERUP_SPREAD:
+    case POWERUP_SPREAD: 
       return POWERUP_SPREAD_COLOR;
 
     case POWERUP_RAPID:
@@ -2385,7 +2385,7 @@ function get_powerup_color(type) {
   }
 }
 
-function get_powerup_text(type) {
+function get_powerup_text(type) { // WEAPON
   switch (type) {
 
     case POWERUP_SPREAD:
