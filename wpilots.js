@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 //
 //  wpilots.js
 //  WPilot server
@@ -702,7 +701,7 @@ function start_gameserver(maps, options, shared) {
       var now = get_time();
           msg = null,
           data_sent = 6,
-          packet_data = []
+          packet_data = [];
 
       while ((msg = message_queue.shift())) {
         var data = JSON.stringify(msg);
@@ -1107,7 +1106,7 @@ function get_unique_name(players, player_id, name) {
       if (players[id].name != unique_name) {
         return unique_name;
       }
-      count++
+      count++;
     }
     if (count == 0) {
       return name;
