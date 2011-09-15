@@ -427,8 +427,8 @@ WPilotClient.prototype.set_state = function(state) {
 
     case CLIENT_DISCONNECTED:
       this.log('You were disconnected from server ' +
-                this.disconnect_reason ?
-                '(Reason: ' + this.disconnect_reason + ').' : '');
+                (this.disconnect_reason ?
+                '(Reason: ' + this.disconnect_reason + ').' : ''));
       this.conn = null;
       this.is_connected = false;
       this.handshaked = false;
@@ -644,7 +644,7 @@ WPilotClient.prototype.join = function(url) {
           break;
       }
 
-    }
+    };
 
     /**
      *  Override the onclose event of the WebSocket instance.
@@ -657,7 +657,7 @@ WPilotClient.prototype.join = function(url) {
 
   }
 
-}
+};
 
 /**
  *  Leaves the game server, if connected to one
