@@ -208,7 +208,7 @@ function start_gameserver(maps, options, shared) {
       no_players:       world.no_players,
       no_ready_players: world.no_ready_players,
       rules:            world.rules
-    }
+    };
   }
 
   /**
@@ -275,7 +275,7 @@ function start_gameserver(maps, options, shared) {
   }
 
   world.on_player_fire = function(player, angle, pos, vel, powerup) {
-   broadcast(OP_PLAYER_FIRE, player.id, angle, pos, vel, powerup);
+   broadcast(OP_PLAYER_FIRE, player.id, angle, pos, vel, powerup); // WEAPON
   }
 
   world.on_player_leave = function(player, reason) {
