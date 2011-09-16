@@ -109,10 +109,10 @@ var CLIENT_DISCONNECTED     = 0,
     CLIENT_CONNECTED        = 2;
 
 // Powerup constants
-var POWERUP_FONT            = '7px Arial', //WEAPON
-    POWERUP_SPREAD_COLOR     = '230,21,90', //WEAPON
-    POWERUP_RAPID_COLOR     = '166,219,0', //WEAPON
-    POWERUP_RICO_COLOR    = '51,182,255'; //WEAPON
+var POWERUP_FONT            = '7px Arial',
+    POWERUP_SPREAD_COLOR     = '230,21,90',
+    POWERUP_RAPID_COLOR     = '166,219,0',
+    POWERUP_RICO_COLOR    = '51,182,255';
 
 var HUD_FONT = [WEIGHT_HEAVY, SIZE_XLARGE, FONT_NAME].join(' ');
 
@@ -1064,7 +1064,7 @@ World.prototype.on_after_init = function() {
   this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
   this.PACKET_HANDLERS[OP_PLAYER_SPAWN] = this.spawn_player;
   this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
-  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; // WEAPON
+  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon;
   this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
   this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
   this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
@@ -1884,7 +1884,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   ctx.arc(0, 0, 108, 0, Math.PI / 180, true);
   ctx.stroke();
 
-  if (me.has_powerup(POWERUP_SPREAD)) { // WEAPON
+  if (me.has_powerup(POWERUP_SPREAD)) {
     var powerup = me.powerup_timers[POWERUP_SPREAD];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
@@ -1896,7 +1896,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.stroke();
   }
 
-  if (me.has_powerup(POWERUP_RAPID)) { // WEAPON
+  if (me.has_powerup(POWERUP_RAPID)) {
     var powerup = me.powerup_timers[POWERUP_RAPID];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
@@ -1908,7 +1908,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.stroke();
   }
 
-  if (me.has_powerup(POWERUP_RICO)) { // WEAPON
+  if (me.has_powerup(POWERUP_RICO)) {
     var powerup = me.powerup_timers[POWERUP_RICO];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
@@ -2369,7 +2369,7 @@ GUIPrompt.prototype.draw = function(ctx) {
   draw_label(ctx, text_pos, 4, this.buffer + PROMPT_CURSOR);
 };
 
-function get_powerup_color(type) { // WEAPON
+function get_powerup_color(type) {
   switch (type) {
 
     case POWERUP_SPREAD: 
@@ -2384,7 +2384,7 @@ function get_powerup_color(type) { // WEAPON
   }
 }
 
-function get_powerup_text(type) { // WEAPON
+function get_powerup_text(type) {
   switch (type) {
 
     case POWERUP_SPREAD:
