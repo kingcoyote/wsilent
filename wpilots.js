@@ -100,8 +100,6 @@ const DEFAULT_OPTIONS = {
   max_rate:             5000,
   r_ready_ratio:        0.6,
   r_respawn_time:       400,
-  r_reload_time:        15,
-  r_shoot_cost:         300,
   r_shield_cost:        30,
   r_energy_recovery:    30,
   r_round_limit:        10,
