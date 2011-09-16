@@ -1,34 +1,12 @@
-WPilot
-------
-Welcome to WPilot server. A proof-of-concept remake of the old classic game XPilot (http://www.xpilot.org/), this time in your web browser. The game uses
-new fancy HTML5 features such as WebSocket and Canvas to make it possible.
+wsilent
+-------------------------------------------------------------------------------
+wsilent (temporary name) is a fork of wpilot that aims to be a spiritual 
+successor to Silent Death Online. The intent is not to create a 'better' wpilot 
+in any way. wsilent is to be a completely different game that utilizes the 
+basic controls, nodejs server and canvas rendering from wpilot, but to go in a 
+different direction.
 
-Please visit project homepage for more details. http://jfd.github.com/wpilot/
-
-
-Server requirements
--------------------
-You need Node.js in order to run the server. Download (or clone) Node.js at http://nodejs.org/
-
-Quick start
------------
-You can start the game- and client server by typing:
-
-	./wpilots.js
-		
-For more more switched, start the server with the '-H' 
-
-Special thanks to
------------------
-Emanuel Dahlberg (http://github.com/EmanueI)
-Linus Larsson (http://github.com/lahjnus)
-
-
-License
--------
-See LICENSE for more info
-
-
-Copyright
----------
-Copyright (c) 2010 Johan Dahlberg
+Author
+-------------------------------------------------------------------------------
+wpilot was created by Johan Dahlberg (http://github.com/jfd)
+wsilent is a fork by Steve Phillips (http://stevephillips.me)
