@@ -208,7 +208,7 @@ function start_gameserver(maps, options, shared) {
       no_players:       world.no_players,
       no_ready_players: world.no_ready_players,
       rules:            world.rules
-    }
+    };
   }
 
   /**

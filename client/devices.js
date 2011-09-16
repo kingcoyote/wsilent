@@ -45,7 +45,7 @@ KeyboardDevice.prototype.destroy = function() {
   this.target.onkeypress = null;
   this.target.onkeydown = null;
   this.target.onkeyup = null;
-}
+};
 
 /**
  *  Returns current state of a defined key
@@ -55,7 +55,7 @@ KeyboardDevice.prototype.destroy = function() {
 KeyboardDevice.prototype.on = function(name) {
   var key = this.bindings[name];
   return this.key_states[key];
-}
+};
 
 /**
  *  Returns current state of a defined key. The key is reseted/toggled if state
@@ -70,7 +70,7 @@ KeyboardDevice.prototype.toggle = function(name) {
     return 1;
   }
   return 0;
-}
+};
 
 
 // Emulate requestAnimationFrame
@@ -131,7 +131,7 @@ ViewportDevice.prototype.update_size = function(width, height) {
 ViewportDevice.prototype.destroy = function() {
   this.set_autorefresh(false);
   this.ctx.clearRect(0, 0, this.w, this.h);
-}
+};
 
 /**
  *  Moves the camera focus to the specified point.
@@ -168,7 +168,7 @@ ViewportDevice.prototype.set_autorefresh = function(autorefresh) {
       })();
     }
   }
-}
+};
 
 /**
  *  Moves the camera focus to the specified point.
@@ -180,7 +180,7 @@ ViewportDevice.prototype.set_camera_pos = function(vector) {
   this.camera.pos = [vector[0] - (this.w / 2), vector[1] - (this.h / 2)];
   this.camera.size = [this.w, this.h];
   this.camera.scale = 1;
-}
+};
 
 ViewportDevice.prototype.get_camera_box = function() {
   return {
@@ -188,8 +188,8 @@ ViewportDevice.prototype.get_camera_box = function() {
     y: this.camera.pos[1],
     w: this.camera.size[0],
     h: this.camera.size[1]
-  }
-}
+  };
+};
 
 /**
  *  Translate a point into a camera pos.
@@ -198,7 +198,7 @@ ViewportDevice.prototype.get_camera_box = function() {
  */
 ViewportDevice.prototype.translate = function(vector) {
   return vector_sub(vector, this.camera.pos);
-}
+};
 
 
 /**
@@ -212,7 +212,7 @@ ViewportDevice.prototype.draw = function() {
   ctx.translate(0, 0);
   this.ondraw(ctx);
   ctx.restore();
-}
+};
 
 
 /**
@@ -254,7 +254,7 @@ SoundDevice.prototype.destroy = function() {
     }
     sound.free_count = 0;
   }
-}
+};
 
 SoundDevice.prototype.init_sfx = function(sources) {
   if (!this.supported || !this.sfx_sound_enabled) {
@@ -279,7 +279,7 @@ SoundDevice.prototype.init_sfx = function(sources) {
   }
 
   return true;
-}
+};
 
 SoundDevice.prototype.init_bg = function(source) {
   if (!this.supported || !this.bg_sound_enabled) {
@@ -297,7 +297,7 @@ SoundDevice.prototype.init_bg = function(source) {
   this.sounds[this.BG_SOUND] = sound;
 
   return true;
-}
+};
 
 SoundDevice.prototype.play = function(name, volume) {
   if (this.destroyed || !this.supported || !this.sfx_sound_enabled) {
@@ -323,7 +323,7 @@ SoundDevice.prototype.play = function(name, volume) {
     buffer.volume = sound_volume;
     buffer.play();
   }
-}
+};
 
 SoundDevice.prototype.playbg = function(volume) {
   if (this.destroyed || !this.supported || !this.bg_sound_enabled) {
@@ -344,7 +344,7 @@ SoundDevice.prototype.playbg = function(volume) {
     buffer.play();
   }
 
-}
+};
 
 SoundDevice.prototype.get_buffer = function(name) {
   var sound = this.sounds[name],
@@ -364,7 +364,7 @@ SoundDevice.prototype.get_buffer = function(name) {
   }
 
   return;
-}
+};
 
 SoundDevice.prototype.free_buffer = function(name, buffer, handle) {
   var sound = this.sounds[name];
@@ -373,4 +373,4 @@ SoundDevice.prototype.free_buffer = function(name, buffer, handle) {
   buffer.removeEventListener('ended', handle, false);
   buffer.is_free = true;
   buffer.load();
-}
+};

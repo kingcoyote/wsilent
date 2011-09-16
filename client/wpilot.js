@@ -39,7 +39,7 @@ var PLAYER_COLORS = {
   10: '63,140,227',
   11: '227,126,76',
   12: '134,213,227'
-}
+};
 
 // Player names
 var PLAYER_NAMES = [
@@ -125,7 +125,7 @@ var SFX_SOUNDS = {
   bullet_spawn: [8,  ['sound/ship_fire_1', 'sound/ship_fire_2', 'sound/ship_fire_3']],
   powerup_spawn:[3,  ['sound/powerup_spawn']],
   powerup_die:  [2,  ['sound/powerup_1_die']]
-}
+};
 
 var COMMAND_USAGE = {
   'name':         'Usage: /name NEW_NAME',
@@ -140,7 +140,7 @@ var COMMAND_USAGE = {
   'sv_start':     'Usage: /sv_start',
   'sv_restart':   'Usage: /sv_restart',
   'sv_warmup':    'Usage: /sv_warmup'
-}
+};
 
 var BG_SOUND = 'sound/background';
 
@@ -174,7 +174,7 @@ var DEFAULT_OPTIONS         = {
     'shield':           40,
     'prompt':           13
   }
-}
+};
 
 /**
  *  Represents the WPilot client.
@@ -246,7 +246,7 @@ WPilotClient.prototype.log = function(msg, color) {
     color: color || COLOR_BRIGHT
   });
   if (this.options.log_console && window.console) console.log(msg);
-}
+};
 
 /**
  *  Executes a command
@@ -256,7 +256,7 @@ WPilotClient.prototype.log = function(msg, color) {
  */
 WPilotClient.prototype.exec = function() {
   COMMANDS.call(null, [this].concat(Array.prototype.slice.call(arguments)));
-}
+};
 
 /**
  *  Sends a chat message
@@ -270,7 +270,7 @@ WPilotClient.prototype.chat = function(message) {
                               message.substr(0, CHAT_MAX_CHARS) :
                               message]);
   }
-}
+};;
 
 /**
  *  Sets the world data
@@ -286,7 +286,7 @@ WPilotClient.prototype.set_world = function(world) {
   this.gui.hud.world = world;
   this.gui.scoreboard.world = world;
   this.gui.warmupnotice.world = world;
-}
+};
 
 /**
  *  Set the viewport to use for this WPilotClient instance.
@@ -308,8 +308,8 @@ WPilotClient.prototype.set_viewport = function(viewport) {
     gui.scoreboard = new GUIScoreboard(viewport);
     gui.warmupnotice = new GUIWarmupNotice(viewport);
     gui.prompt = new GUIPrompt(viewport);
-    gui.prompt.oncommand = function() { self.exec.apply(self, arguments) };
-    gui.prompt.onchat = function() { self.chat.apply(self, arguments) };
+    gui.prompt.oncommand = function() { self.exec.apply(self, arguments); };
+    gui.prompt.onchat = function() { self.chat.apply(self, arguments); };
 
     // Set the draw callback
     viewport.ondraw = function(ctx) {
@@ -348,11 +348,11 @@ WPilotClient.prototype.set_viewport = function(viewport) {
         }
 
       }
-    }
+    };
   }
 
   this.viewport = viewport;
-}
+};
 
 /**
  *  Set the Input Device
@@ -361,7 +361,7 @@ WPilotClient.prototype.set_viewport = function(viewport) {
  */
 WPilotClient.prototype.set_input = function(device) {
   this.input = device;
-}
+};
 
 /**
  *  Set the Sound Device
@@ -374,7 +374,7 @@ WPilotClient.prototype.set_sound = function(device) {
     device.init_bg(BG_SOUND);
   }
   this.sound = device;
-}
+};
 
 /**
  *  Sets the player data
@@ -390,7 +390,7 @@ WPilotClient.prototype.set_player = function(player) {
   this.gui.hud.me = player;
   this.gui.scoreboard.me = player;
   this.gui.warmupnotice.me = player;
-}
+};
 
 WPilotClient.prototype.set_server_state = function(state) {
   if (state.no_players != state.max_players) {
@@ -400,7 +400,7 @@ WPilotClient.prototype.set_server_state = function(state) {
   } else {
     this.log('Server is full');
   }
-}
+};
 
 /**
  *  Sets the state of the Client instance
@@ -442,7 +442,7 @@ WPilotClient.prototype.set_state = function(state) {
 
   }
   this.state = state;
-}
+};
 
 /**
  *  Starts the gameloop
@@ -522,7 +522,7 @@ WPilotClient.prototype.process_user_input = function(t, dt) {
       this.post_game_packet([OP_CLIENT_STATE, new_action, new_angle]);
     }
   }
-}
+};
 
 /**
  *  Starts the gameloop
@@ -540,12 +540,12 @@ WPilotClient.prototype.start_gameloop = function(initial_tick) {
   gameloop.ontick = function(t, dt) {
     self.process_user_input(t, dt);
     self.world.update(t, dt);
-  }
+  };
 
   // Is called when loop is about to start over.
   gameloop.ondone = function(t, dt, alpha) {
     self.update_netstat(t, dt);
-  }
+  };
 
   this.netstat.start_time = this.netstat.last_update =
                             this.netstat.last_received = get_time();
@@ -559,7 +559,7 @@ WPilotClient.prototype.start_gameloop = function(initial_tick) {
   this.sound.playbg(this.options.sound_bg_volume);
 
   return gameloop;
-}
+};
 
 /**
  *  Kills the game loop.
@@ -575,7 +575,7 @@ WPilotClient.prototype.stop_gameloop = function() {
   if (this.viewport) {
     this.viewport.set_autorefresh(false);
   }
-}
+};
 
 /**
  *  Joins a game server.
@@ -667,7 +667,7 @@ WPilotClient.prototype.join = function(url) {
 WPilotClient.prototype.leave = function(reason) {
   this.disconnect_reason = reason;
   this.conn.close();
-}
+};
 
 /**
  *  Post a game packet to server
@@ -681,7 +681,7 @@ WPilotClient.prototype.post_game_packet = function(msg) {
     this.netstat.messages_sent += 1;
   }
   this.conn.send(packet);
-}
+};
 
 /**
  *  Post a control packet to server
@@ -691,7 +691,7 @@ WPilotClient.prototype.post_game_packet = function(msg) {
 WPilotClient.prototype.post_control_packet = function(msg) {
   var packet = JSON.stringify(msg);
   this.conn.send(packet);
-}
+};
 
 /**
  *  Updates the netstat object
@@ -715,7 +715,7 @@ WPilotClient.prototype.update_netstat = function() {
       netstat.peek_out = netstat.bps_out > netstat.peek_out ? netstat.bps_out : netstat.peek_out;
     }
   }
-}
+};
 
 /**
  *  Processes control message recieved from server.
@@ -774,7 +774,7 @@ var process_control_message = match (
   },
 
   function(msg) {
-    console.log('Unhandled message')
+    console.log('Unhandled message');
     console.log(msg[0]);
   }
 
@@ -863,7 +863,7 @@ var COMMANDS = match (
       client.log('Command not found', COLOR_ACCENT_1);
     }
   }
-)
+);
 
 Player.prototype.on_before_init = function() {
   this.angle = 0;
@@ -873,18 +873,18 @@ Player.prototype.on_before_init = function() {
   // Used by score board to write information
   this.death_cause = 0;
   this.killed_by = null;
-}
+};
 
 Player.prototype.on_after_init = function() {
   this.color = PLAYER_COLORS[this.id] || COLOR_BRIGHT;
-}
+};
 
 World.prototype.on_before_init = function() {
   this.anim_id_count = 1;
   this.animations = [];
   this.ranked_player_list = [];
   this.winner_names = null;
-}
+};
 
 /**
  *  Callback for world update
@@ -900,11 +900,11 @@ World.prototype.on_update = function(t, dt) {
       animations.splice(index, 1);
     }
   }
-}
+};
 
 World.prototype.on_after_state_set = function() {
   this.ranked_player_list = calculate_ranks(this);
-}
+};
 
 /**
  * Callback for player join
@@ -913,7 +913,7 @@ World.prototype.on_player_join = function(player) {
   this.client.log('Player "' + player.name + '" joined the world...');
 
   this.ranked_player_list = calculate_ranks(this);
-}
+};
 
 /**
  * Callback for player leave
@@ -922,7 +922,7 @@ World.prototype.on_player_leave = function(player, reason) {
   this.client.log('Player "' + player.name + '" disconnected. Reason: ' + reason);
 
   this.ranked_player_list = calculate_ranks(this);
-}
+};
 
 /**
  * Callback for player spawn.
@@ -944,13 +944,13 @@ World.prototype.on_player_spawn = function(player, pos) {
     this.client.viewport.set_camera_pos(pos);
   }
 
-}
+};
 
 World.prototype.on_player_fire = function(player, angle) {
   var volume = player.is_me ? 1 : calculate_sfx_volume(this.client,
                                                        player.entity.pos);
   this.client.sound.play('bullet_spawn', volume);
-}
+};
 
 /**
  * Callback for player died
@@ -988,14 +988,14 @@ World.prototype.on_player_died = function(player, old, death_cause, killer) {
   this.client.log(text);
 
   this.ranked_player_list = calculate_ranks(this);
-}
+};
 
 /**
  * Callback for player ready
  */
 World.prototype.on_player_ready = function(player) {
   this.client.log(player.is_me ? 'You are now ready' : 'Player "' + player.name + ' is ready');
-}
+};
 
 /**
  * Callback for player name changed
@@ -1005,7 +1005,7 @@ World.prototype.on_player_name_changed = function(player, new_name, old_name) {
   if (player.is_me) {
     this.client.options.name = new_name;
   }
-}
+};
 
 /**
  * Callback for round state changed
@@ -1041,7 +1041,7 @@ World.prototype.on_powerup_spawn = function(powerup) {
     powerup.visible = true;
   });
 
-}
+};
 
 World.prototype.on_powerup_die = function(powerup, player) {
 
@@ -1055,7 +1055,7 @@ World.prototype.on_powerup_die = function(powerup, player) {
     get_powerup_text(powerup.powerup_type)
   ));
 
-}
+};
 
 World.prototype.on_after_init = function() {
   this.PACKET_HANDLERS = {};
@@ -1070,7 +1070,7 @@ World.prototype.on_after_init = function() {
   this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
   this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
   this.PACKET_HANDLERS[OP_POWERUP_DIE] = this.kill_powerup;
-}
+};
 
 World.prototype.play_animation = function(animation, callback) {
   var id = this.anim_id_count++;
@@ -1082,7 +1082,7 @@ World.prototype.play_animation = function(animation, callback) {
   });
 
   return id;
-}
+};
 
 World.prototype.process_world_packet = function(msg) {;
   var id = msg.shift();
@@ -1092,7 +1092,7 @@ World.prototype.process_world_packet = function(msg) {;
   } else {
     console.log(id);
   }
-}
+};
 
 World.prototype.update_player_info = function(id, ping, ready, name) {
   var player = this.players[id];
@@ -1109,7 +1109,7 @@ World.prototype.update_player_info = function(id, ping, ready, name) {
   if (name) {
     this.set_player_name(id, name);
   }
-}
+};
 
 World.prototype.update_player_state = function(id, pos, angle, action) {
   var player = this.players[id];
@@ -1127,12 +1127,12 @@ World.prototype.update_player_state = function(id, pos, angle, action) {
     }
   }
 
-}
+};
 
 World.prototype.player_say = function(player_id, message) {
   var player = this.players[player_id];
   this.client.log(player.name + ': ' + message, player.color);
-}
+};
 
 /**
  *  Method World.draw
@@ -1163,7 +1163,7 @@ World.prototype.draw = function(viewport, alpha) {
     job.anim.draw(ctx);
     ctx.restore();
   }
-}
+};
 
 /**
  *  Draw's the background grid of the viewport.
@@ -1195,7 +1195,7 @@ World.prototype.draw_grid = function(ctx, camera) {
   if (camy < 0) {
     y = -camy;
   } else {
-    y = GRID_CELL_SIZE - camy % GRID_CELL_SIZE
+    y = GRID_CELL_SIZE - camy % GRID_CELL_SIZE;
   }
 
   while(y < camh) {
@@ -1226,7 +1226,7 @@ World.prototype.draw_grid = function(ctx, camera) {
     ctx.fillRect(0, this.size[1] - camy, camw, camy - camh + this.size[1]);
   }
   ctx.restore();
-}
+};
 
 /**
  *  Class Ship
@@ -1236,15 +1236,15 @@ World.prototype.draw_grid = function(ctx, camera) {
 Ship.prototype.on_before_init = function() {
   this.visible = false;
   this.is_me = false;
-}
+};
 
 Ship.prototype.on_after_init = function() {
   this.animations = {
     'thrust': new ThrustAnimation(),
     'shield': new ShieldAnimation()
-  }
+  };
   this.pos_sv = this.pos;
-}
+};
 
 Ship.prototype.world_update = function(t, dt) {
 
@@ -1256,7 +1256,7 @@ Ship.prototype.world_update = function(t, dt) {
   }
 
   this.update(t, dt);
-}
+};
 
 
 /**
@@ -1268,7 +1268,7 @@ Ship.prototype.update = function(t, dt) {
   for (var anim in this.animations) {
     this.animations[anim].update(t, dt);
   }
-}
+};
 
 /**
  *  Override the EntityBase.destroy method. Destroy's the Ship in end of
@@ -1282,7 +1282,7 @@ Ship.prototype.destroy = function(death_cause, killer_id) {
   this.death_cause = death_cause;
   this.destroyed_by = killer_id;
   this.animations['die'].set_active(true);
-}
+};
 
 
 /**
@@ -1313,7 +1313,7 @@ Ship.prototype.draw = function(ctx) {
   	ctx.fillStyle = 'rgb(' + this.player.color + ')';
     draw_label(ctx, 0, this.size[1] + 10, this.player.name, 'center', 100);
   }
-}
+};
 
 /**
  *  Class Bullet
@@ -1322,7 +1322,7 @@ Ship.prototype.draw = function(ctx) {
  */
 Bullet.prototype.on_before_init = function() {
   this.visible = true;
-}
+};
 
 /**
  *  Method Ship.draw
@@ -1334,7 +1334,7 @@ Bullet.prototype.draw = function(ctx) {
   ctx.rotate(this.angle);
   ctx.fillStyle = "white";
   ctx.fillRect(-(w / 2), -(h / 2), w, h);
-}
+};
 
 /**
  *  Method Wall.draw
@@ -1364,7 +1364,7 @@ Wall.prototype.draw = function(ctx, world) {
       break;
   }
   ctx.restore();
-}
+};
 
 /**
  *  Draw's the Block instance.
@@ -1440,7 +1440,8 @@ Block.prototype.draw = function(ctx, world) {
     ctx.lineTo(0, size[1]);
     ctx.lineTo(0, size[1]-BLOCK_SPACING);
     ctx.stroke();
-  }}
+  }
+};
 
 Powerup.prototype.on_after_init = function() {
   this.inner_radius = this.size[0]  / 1.8;
@@ -1448,7 +1449,7 @@ Powerup.prototype.on_after_init = function() {
   this.color = get_powerup_color(this.powerup_type);
   this.ch = get_powerup_text(this.powerup_type)[0];
   this.visible = false;
-}
+};
 
 Powerup.prototype.update = function(t, dt) {
   if (!this.visible) return;
@@ -1458,7 +1459,7 @@ Powerup.prototype.update = function(t, dt) {
   if (this.pulse > 20) {
     this.pulse = 0;
   }
-}
+};
 
 /**
  *  Draws the Powerup instance
@@ -1487,7 +1488,7 @@ Powerup.prototype.draw = function(ctx) {
   ctx.fillStyle = 'rgba(' + color + ', ' + text_alpha + ')';
   draw_label(ctx, 1, 2, this.ch, 'center', inner_radius);
 
-}
+};
 
 /**
  *  Creates a new instance of the ThrustAnimation class.
@@ -1516,7 +1517,7 @@ function ThrustAnimation() {
  */
 ThrustAnimation.prototype.set_active = function(active) {
   this.particles.active = active;
-}
+};
 
 /**
  *  Updates the ThrustAnimation instance.
@@ -1526,7 +1527,7 @@ ThrustAnimation.prototype.set_active = function(active) {
  */
 ThrustAnimation.prototype.update = function(t, dt) {
   this.particles.update(65 * dt);
-}
+};
 
 /**
  *  Draws the ThrustAnimation instance on specified context.
@@ -1535,7 +1536,7 @@ ThrustAnimation.prototype.update = function(t, dt) {
  */
 ThrustAnimation.prototype.draw = function(ctx) {
   this.particles.render(ctx);
-}
+};
 
 /**
  *  Creates a new instance of the ShieldAnimation class.
@@ -1557,7 +1558,7 @@ ShieldAnimation.prototype.set_active = function(active) {
       this.value = 0.01;
     }
   }
-}
+};
 
 /**
  *  Updates the ShieldAnimation instance.
@@ -1573,7 +1574,7 @@ ShieldAnimation.prototype.update = function(t, dt) {
     value -= (dt * 5);
   }
   this.value = value;
-}
+};
 
 /**
  *  Draws the ShieldAnimation instance on specified context.
@@ -1587,7 +1588,7 @@ ShieldAnimation.prototype.draw = function(ctx) {
     ctx.arc(0, 0, 20, 0, Math.PI / 180, true);
     ctx.stroke();
   }
-}
+};
 
 /**
  *  Creates a new instance of the SpawnAnimation class.
@@ -1634,7 +1635,7 @@ SpawnAnimation.prototype.update = function(t, dt) {
   if (this.particles.particleCount == 0) {
     this.is_done = true;
   }
-}
+};
 
 /**
  *  Draws the SpawnAnimation instance on specified context.
@@ -1647,7 +1648,7 @@ SpawnAnimation.prototype.draw = function(ctx) {
   ctx.fillStyle = 'rgba(255, 255, 255, ' + this.alpha + ')';
   draw_triangle(ctx, (SHIP_WIDTH * this.ship_size), (SHIP_HEIGHT * this.ship_size));
   ctx.restore();
-}
+};
 
 /**
  *  Creates a new instance of the DieAnimation class.
@@ -1664,7 +1665,7 @@ function DieAnimation(pos, angle, vel) {
   this.lifetime = 1.5;
   this.pos = pos;
   this.vel = vel;
-  this.angle = angle
+  this.angle = angle;
   this.is_done = false;
 }
 
@@ -1700,7 +1701,7 @@ DieAnimation.prototype.update = function(t, dt) {
   }
 
   this.lifetime -= dt;
-}
+};
 
 /**
  *  Draws the DieAnimation instance on specified context.
@@ -1720,7 +1721,7 @@ DieAnimation.prototype.draw = function(ctx) {
     draw_triangle(ctx, piece[2], piece[3]);
     ctx.restore();
   }
-}
+};
 
 /**
  *  Creates a new instance of the ExplodeAnimation class.
@@ -1756,7 +1757,7 @@ ExplodeAnimation.prototype.update = function(t, dt) {
   if (this.particles.particleCount == 0) {
     this.is_done = true;
   }
-}
+};
 
 /**
  *  Draws the ExplodeAnimation instance on specified context.
@@ -1765,7 +1766,7 @@ ExplodeAnimation.prototype.update = function(t, dt) {
  */
 ExplodeAnimation.prototype.draw = function(ctx) {
   this.particles.render(ctx);
-}
+};
 
 /**
  *  Creates a new instance of the TextAnimation class.
@@ -1789,7 +1790,7 @@ TextAnimation.prototype.update = function(t, dt) {
   if (this.value >= 50) {
     this.is_done = true;
   }
-}
+};
 
 /**
  *  Draws the ExplodeAnimation instance on specified context.
@@ -1803,7 +1804,7 @@ TextAnimation.prototype.draw = function(ctx) {
   ctx.fillStyle = 'rgba(' + this.color + ', ' + alpha + ')';
   ctx.font = 'bold ' + size + 'px Arial';
   draw_label(ctx, 0, 0, this.text, 'center');
-}
+};
 
 /**
  *  Constructor for PowerupSpawnAnimation instance.
@@ -1827,7 +1828,7 @@ PowerupSpawnAnimation.prototype.update = function(t, dt) {
   if (this.alpha >= 0.8) {
     this.is_done = true;
   }
-}
+};
 
 /**
  *  Draws the PowerupSpawnAnimation instance on specified context.
@@ -1844,7 +1845,7 @@ PowerupSpawnAnimation.prototype.draw = function(ctx) {
   ctx.strokeStyle = 'rgba(' + color + ', ' + alpha + ')';
   ctx.arc(0, 0, radius, 0, Math.PI / 180, true);
   ctx.stroke();
-}
+};
 
 /**
  *  GUIPlayerHUD
@@ -1864,7 +1865,7 @@ GUIPlayerHUD.prototype.pos = function() {
 GUIPlayerHUD.prototype.is_visible = function() {
   return !this.world || !this.me || this.me.dead || !this.me.entity ?
                                                             false : this.visible;
-}
+};
 
 GUIPlayerHUD.prototype.draw = function(ctx, t) {
   var me    = this.me,
@@ -1887,7 +1888,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   if (me.has_powerup(POWERUP_SPREAD)) {
     var powerup = me.powerup_timers[POWERUP_SPREAD];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
-    angle = (Math.PI * 2 * perc)
+    angle = (Math.PI * 2 * perc);
 
     ctx.beginPath();
     ctx.lineWidth = 6;
@@ -1911,7 +1912,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   if (me.has_powerup(POWERUP_RICO)) {
     var powerup = me.powerup_timers[POWERUP_RICO];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
-    angle = (Math.PI * 2 * perc)
+    angle = (Math.PI * 2 * perc);
 
     ctx.beginPath();
     ctx.lineWidth = 6;
@@ -1948,7 +1949,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.fillStyle = 'rgba(' + COLOR_BRIGHT + ', 0.8)';
     ctx.fillRect(0, -110, 1, 6);
   }
-}
+};
 
 /**
  *  GUIMessageLog
@@ -1967,7 +1968,7 @@ GUIMessageLog.prototype.pos = function() {
 
 GUIMessageLog.prototype.is_visible = function() {
   return this.buffer == null ? false : this.visible;
-}
+};
 
 GUIMessageLog.prototype.draw = function(ctx) {
   var buffer = this.buffer,
@@ -1992,7 +1993,7 @@ GUIMessageLog.prototype.draw = function(ctx) {
       draw_label(ctx, 0, (row -= 12), message.text, 'left');
     }
   }
-}
+};
 
 /**
  *  GUINetStat
@@ -2010,7 +2011,7 @@ GUINetStat.prototype.pos = function() {
 
 GUINetStat.prototype.is_visible = function() {
   return !this.stats.start_time ? false : this.visible;
-}
+};
 
 GUINetStat.prototype.draw = function(ctx) {
   var stats = this.stats;
@@ -2023,7 +2024,7 @@ GUINetStat.prototype.draw = function(ctx) {
   var text = 'Netstat: in: ' + in_kps + 'kb/s, out: ' + out_kps + 'kb/s, ' +
              'in: ' + in_mps + '/mps, out: ' + out_mps + '/mps';
   draw_label(ctx, 0, 0, text, 'left');
-}
+};
 
 /**
  *  GUIFpsCounter
@@ -2041,7 +2042,7 @@ GUIFpsCounter.prototype.pos = function() {
 
 GUIFpsCounter.prototype.is_visible = function() {
   return this.visible;
-}
+};
 
 GUIFpsCounter.prototype.draw = function(ctx) {
   var current = parseInt(this.stats.current_fps);
@@ -2052,7 +2053,7 @@ GUIFpsCounter.prototype.draw = function(ctx) {
   draw_label(ctx, 0, 0, 'FPS: ' + current + 
                         ' (min: ' + min + ', max: ' + max + ')',
                         'right');
-}
+};
 
 /**
  *  GUIWarmupNotice
@@ -2073,7 +2074,7 @@ GUIWarmupNotice.prototype.pos = function() {
 GUIWarmupNotice.prototype.is_visible = function() {
   return !this.world || this.world.r_state != ROUND_WARMUP || !this.me ||
          this.me.dead ? false : this.visible;
-}
+};
 
 GUIWarmupNotice.prototype.draw = function(ctx) {
   var world = this.world,
@@ -2104,7 +2105,7 @@ GUIWarmupNotice.prototype.draw = function(ctx) {
   }
 
   draw_label(ctx, 0, 0, text, 'center');
-}
+};
 
 /**
  *  GUIScoreboard
@@ -2115,7 +2116,7 @@ function GUIScoreboard(viewport) {
   this.visible = false;
   this.pulse = 0;
   this.world = null;
-  this.me = null
+  this.me = null;
 }
 
 GUIScoreboard.prototype.pos = function() {
@@ -2124,7 +2125,7 @@ GUIScoreboard.prototype.pos = function() {
 
 GUIScoreboard.prototype.is_visible = function() {
   return this.visible || (this.world && this.me && this.me.dead) || false;
-}
+};
 
 GUIScoreboard.prototype.draw = function(ctx) {
   var world = this.world,
@@ -2223,7 +2224,7 @@ GUIScoreboard.prototype.draw = function(ctx) {
     y += 28;
   }
 
-}
+};
 
 GUIScoreboard.prototype.draw_row = function(ctx, pos, player, width) {
   var x = pos[0],
@@ -2281,7 +2282,7 @@ GUIScoreboard.prototype.draw_row = function(ctx, pos, player, width) {
   draw_label(ctx, (x -= 50), y, deaths, 'right', 50);
   draw_label(ctx, (x -= 50), y, time, 'right', 50);
   draw_label(ctx, (x -= 50), y, ping, 'right', 50);
-}
+};
 
 function GUIPrompt(viewport) {
   this.viewport = viewport;
@@ -2298,7 +2299,7 @@ GUIPrompt.prototype.pos = function() {
 
 GUIPrompt.prototype.is_visible = function() {
   return this.visible;
-}
+};
 
 GUIPrompt.prototype.handle_key_stroke = function(char) {
   switch (char) {
@@ -2339,7 +2340,7 @@ GUIPrompt.prototype.handle_key_stroke = function(char) {
       this.buffer += String.fromCharCode(char);
       break;
   }
-}
+};
 
 GUIPrompt.prototype.draw = function(ctx) {
   var vp = this.viewport;
@@ -2367,7 +2368,7 @@ GUIPrompt.prototype.draw = function(ctx) {
   ctx.rect(margin + 4, 4, clip_width, height - 8);
   ctx.clip();
   draw_label(ctx, text_pos, 4, this.buffer + PROMPT_CURSOR);
-}
+};
 
 function get_powerup_color(type) {
   switch (type) {
