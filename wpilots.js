@@ -273,7 +273,7 @@ function start_gameserver(maps, options, shared) {
   }
 
   world.on_player_fire = function(player, angle, pos, vel, powerup) {
-   broadcast(OP_PLAYER_FIRE, player.id); 
+   broadcast(OP_PLAYER_FIRE, player); 
   }
 
   world.on_player_leave = function(player, reason) {
