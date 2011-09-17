@@ -273,7 +273,7 @@ function start_gameserver(maps, options, shared) {
   }
 
   world.on_player_fire = function(player, angle, pos, vel, powerup) {
-   broadcast(OP_PLAYER_FIRE, player.id, angle, pos, vel, powerup); 
+   broadcast(OP_PLAYER_FIRE, player); 
   }
 
   world.on_player_leave = function(player, reason) {
@@ -344,9 +344,9 @@ function start_gameserver(maps, options, shared) {
       for (var id in world.players) {
         var player = world.players[id];
         var message = [OP_PLAYER_STATE, player.id];
-        if (player.entity) {
-          message.push(pack_vector(player.entity.pos), player.entity.angle,
-                                                       player.entity.action);
+        if (player.ship) {
+          message.push(pack_vector(player.ship.pos), player.ship.angle,
+                                                       player.ship.action);
           connection.queue(message);
         }
         if (update_tick % 200 == 0) {
@@ -999,7 +999,7 @@ var process_game_message = match (
   function(action, angle, player, world) {
     player.action = action;
     if (!player.dead) {
-      player.entity.angle = angle;
+      player.ship.angle = angle;
     }
   },
 
