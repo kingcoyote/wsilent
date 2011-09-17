@@ -319,7 +319,7 @@ WPilotClient.prototype.set_viewport = function(viewport) {
           pos;
 
       if (player && !player.dead) {
-        viewport.set_camera_pos(player.entity.pos);
+        viewport.set_camera_pos(player.ship.pos);
       }
 
       if (world) {
@@ -477,9 +477,9 @@ WPilotClient.prototype.process_user_input = function(t, dt) {
     this.post_game_packet([OP_CLIENT_SET, 'ready']);
   }
 
-  if (!player.dead && player.entity.visible) {
+  if (!player.dead && player.ship.visible) {
     var new_action   = 0,
-        new_angle     = player.entity.angle;
+        new_angle     = player.ship.angle;
 
     if (input.on('thrust')) new_action |= THRUST;
     if (input.on('shield')) new_action |= SHIELD;
@@ -512,13 +512,13 @@ WPilotClient.prototype.process_user_input = function(t, dt) {
       this.current_r = 0;
     }
 
-    if (new_action != player.action || new_angle != player.entity.angle) {
+    if (new_action != player.action || new_angle != player.ship.angle) {
 
       if (new_angle > Math.PI) new_angle = -Math.PI;
       else if(new_angle < -Math.PI) new_angle = Math.PI;
 
       player.action = new_action;
-      player.entity.angle = new_angle;
+      player.ship.angle = new_angle;
       this.post_game_packet([OP_CLIENT_STATE, new_action, new_angle]);
     }
   }
@@ -866,7 +866,6 @@ var COMMANDS = match (
 );
 
 Player.prototype.on_before_init = function() {
-  this.angle = 0;
   this.rank = 1;
   this.is_me = false;
 
@@ -934,13 +933,13 @@ World.prototype.on_player_spawn = function(player, pos) {
   this.client.sound.play('ship_spawn', volume);
 
   this.play_animation(new SpawnAnimation(pos), function() {
-    if (player.entity) {
-      player.entity.visible = true;
+    if (player.ship) {
+      player.ship.visible = true;
     }
   });
 
   if (player.is_me) {
-    player.entity.is_me = true;
+    player.ship.is_me = true;
     this.client.viewport.set_camera_pos(pos);
   }
 
@@ -949,7 +948,7 @@ World.prototype.on_player_spawn = function(player, pos) {
 World.prototype.on_player_fire = function(player, angle) {
   var volume = player.is_me ? 
         1 : 
-        calculate_sfx_volume(this.client, player.entity.pos);
+        calculate_sfx_volume(this.client, player.ship.pos);
   this.client.sound.play(player.ship.weapon.sound, volume); // WPN
 };
 
@@ -968,8 +967,8 @@ World.prototype.on_player_died = function(player, old, death_cause, killer) {
   this.play_animation(new DieAnimation(old.pos, old.angle, old.vel));
   this.play_animation(new ExplodeAnimation(old.pos));
 
-  if (killer && killer.is_me && killer.entity) {
-    this.play_animation(new TextAnimation(killer.entity.pos, COLOR_ACCENT_1, '+1'));
+  if (killer && killer.is_me && killer.ship) {
+    this.play_animation(new TextAnimation(killer.ship.pos, COLOR_ACCENT_1, '+1'));
   }
 
   if (player.is_me) {
@@ -1066,7 +1065,7 @@ World.prototype.on_after_init = function() {
   this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
   this.PACKET_HANDLERS[OP_PLAYER_SPAWN] = this.spawn_player;
   this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
-  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon;
+  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; // this function no longer exists
   this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
   this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
   this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
@@ -1116,12 +1115,12 @@ World.prototype.update_player_state = function(id, pos, angle, action) {
   var player = this.players[id];
 
   // The Flash fallback sometimes bugs. Do an extra check here
-  if (player.entity) {
+  if (player.ship) {
     if (pos) {
-      player.entity.pos_sv = pos;
+      player.ship.pos_sv = pos; // pos_sv doesn't exist elsewhere
     }
     if (!player.is_me) {
-      player.entity.angle = angle;
+      player.ship.angle = angle;
     }
     if (!player.is_me) {
       player.action = action;
@@ -1147,7 +1146,7 @@ World.prototype.draw = function(viewport, alpha) {
   this.draw_grid(ctx, camera);
   for (var id in entities) {
     var entity = entities[id];
-    if (!entity.is_me && intersects(entity.get_bounds(), viewport.get_camera_box())) {
+    if (!entity.is_me && intersects(entity.get_bounds(), viewport.get_camera_box())) { // WPN this may not work with entity shifting from being a player to being a ship
       var point = viewport.translate(entity.pos);
       ctx.save();
       ctx.translate(point[0], point[1]);
@@ -1864,7 +1863,7 @@ GUIPlayerHUD.prototype.pos = function() {
 };
 
 GUIPlayerHUD.prototype.is_visible = function() {
-  return !this.world || !this.me || this.me.dead || !this.me.entity ?
+  return !this.world || !this.me || this.me.dead || !this.me.ship ? // this might not need to be ship
                                                             false : this.visible;
 };
 
@@ -1872,7 +1871,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   var me    = this.me,
       world = this.world;
 
-  var angle = (Math.PI * 2 * me.energy / 100);
+  var angle = (Math.PI * 2 * me.ship.energy / 100); // this doesn't seem to work right
 
   ctx.beginPath();
   ctx.lineWidth = 22;
@@ -1886,8 +1885,8 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   ctx.arc(0, 0, 108, 0, Math.PI / 180, true);
   ctx.stroke();
 
-  if (me.has_powerup(POWERUP_SPREAD)) {
-    var powerup = me.powerup_timers[POWERUP_SPREAD];
+  if (me.ship.has_powerup(POWERUP_SPREAD)) {
+    var powerup = me.ship.powerup_timers[POWERUP_SPREAD];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
 
@@ -1898,8 +1897,8 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.stroke();
   }
 
-  if (me.has_powerup(POWERUP_RAPID)) {
-    var powerup = me.powerup_timers[POWERUP_RAPID];
+  if (me.ship.has_powerup(POWERUP_RAPID)) {
+    var powerup = me.ship.powerup_timers[POWERUP_RAPID];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
 
@@ -1910,8 +1909,8 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.stroke();
   }
 
-  if (me.has_powerup(POWERUP_RICO)) {
-    var powerup = me.powerup_timers[POWERUP_RICO];
+  if (me.ship.has_powerup(POWERUP_RICO)) {
+    var powerup = me.ship.powerup_timers[POWERUP_RICO];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
 
@@ -1941,12 +1940,12 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   }
 
   // Draw ship and crosshair
-  if (me.entity) {
+  if (me.ship) {
     ctx.save();
-    me.entity.draw(ctx);
+    me.ship.draw(ctx);
     ctx.restore();
 
-    ctx.rotate(me.entity.angle);
+    ctx.rotate(me.ship.angle);
     ctx.fillStyle = 'rgba(' + COLOR_BRIGHT + ', 0.8)';
     ctx.fillRect(0, -110, 1, 6);
   }
