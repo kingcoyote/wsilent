@@ -1871,13 +1871,15 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   var me    = this.me,
       world = this.world;
 
-  var angle = (Math.PI * 2 * me.ship.energy / 100); // this doesn't seem to work right
+  if(me.ship) {
+	  var angle = (Math.PI * 2 * me.ship.energy / 100); // this doesn't seem to work right
 
-  ctx.beginPath();
-  ctx.lineWidth = 22;
-  ctx.strokeStyle = 'rgba(' + COLOR_BRIGHT + ', 0.06)';
-  ctx.arc(0, 0, 95, -Math.PI/2, -angle - Math.PI / 2, true);
-  ctx.stroke();
+	  ctx.beginPath();
+	  ctx.lineWidth = 22;
+	  ctx.strokeStyle = 'rgba(' + COLOR_BRIGHT + ', 0.06)';
+	  ctx.arc(0, 0, 95, -Math.PI/2, -angle - Math.PI / 2, true);
+	  ctx.stroke();
+  }
 
   ctx.beginPath();
   ctx.lineWidth = 1;
@@ -1885,7 +1887,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
   ctx.arc(0, 0, 108, 0, Math.PI / 180, true);
   ctx.stroke();
 
-  if (me.ship.has_powerup(POWERUP_SPREAD)) {
+  if (me.ship && me.ship.has_powerup(POWERUP_SPREAD)) {
     var powerup = me.ship.powerup_timers[POWERUP_SPREAD];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
@@ -1897,7 +1899,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.stroke();
   }
 
-  if (me.ship.has_powerup(POWERUP_RAPID)) {
+  if (me.ship && me.ship.has_powerup(POWERUP_RAPID)) {
     var powerup = me.ship.powerup_timers[POWERUP_RAPID];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
@@ -1909,7 +1911,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
     ctx.stroke();
   }
 
-  if (me.ship.has_powerup(POWERUP_RICO)) {
+  if (me.ship && me.ship.has_powerup(POWERUP_RICO)) {
     var powerup = me.ship.powerup_timers[POWERUP_RICO];
     var perc = (powerup.end - t) / (powerup.end - powerup.start);
     angle = (Math.PI * 2 * perc);
