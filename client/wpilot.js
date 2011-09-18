@@ -949,7 +949,7 @@ World.prototype.on_player_fire = function(player, angle) {
   var volume = player.is_me ? 
         1 : 
         calculate_sfx_volume(this.client, player.ship.pos);
-  this.client.sound.play(player.ship.weapon.sound, volume); // WPN
+  this.client.sound.play(player.ship.weapon.sound, volume);
 };
 
 /**
@@ -1065,7 +1065,7 @@ World.prototype.on_after_init = function() {
   this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
   this.PACKET_HANDLERS[OP_PLAYER_SPAWN] = this.spawn_player;
   this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
-  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; // this function no longer exists
+  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; 
   this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
   this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
   this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
@@ -1146,7 +1146,7 @@ World.prototype.draw = function(viewport, alpha) {
   this.draw_grid(ctx, camera);
   for (var id in entities) {
     var entity = entities[id];
-    if (!entity.is_me && intersects(entity.get_bounds(), viewport.get_camera_box())) { // WPN this may not work with entity shifting from being a player to being a ship
+    if (!entity.is_me && intersects(entity.get_bounds(), viewport.get_camera_box())) { 
       var point = viewport.translate(entity.pos);
       ctx.save();
       ctx.translate(point[0], point[1]);
@@ -1872,7 +1872,7 @@ GUIPlayerHUD.prototype.draw = function(ctx, t) {
       world = this.world;
 
   if(me.ship) {
-	  var angle = (Math.PI * 2 * me.ship.energy / 100); // this doesn't seem to work right
+	  var angle = (Math.PI * 2 * me.ship.energy / 100);
 
 	  ctx.beginPath();
 	  ctx.lineWidth = 22;
