@@ -9,11 +9,14 @@
 var sys       = require('sys'),
     path      = require('path'),
     fs        = require('fs'),
+    httpserver= require('./lib/httpserver'),
+    gameserver= require('./lib/gameserver'),
     fu        = require('./lib/fu');
     ws        = require('./lib/ws'),
     optparse  = require('./lib/optparse'),
     match     = require('./lib/match').Match,
-    go        = require('./lib/gameobjects');
+    go        = require('./lib/gameobjects'),
+    io        = require('socket.io');
 
 
 // Define aliases
@@ -109,7 +112,9 @@ const DEFAULT_OPTIONS = {
   r_powerup_respawn:    600,
   r_powerup_spread_t:   700,
   r_powerup_rapid_t:    600,
-  r_powerup_rico_t:     600
+  r_powerup_rico_t:     600,
+  dirname:              __dirname,
+  default_page:         '/index.html'
 };
 
 // Paths to all files that should be server to client.
@@ -159,8 +164,6 @@ const CLIENT_DATA = [
 function main() {
   var options         = parse_options(),
       shared          = { get_state: function() {} },
-      webserver       = null,
-      gameserver      = null,
       policy_server   = null,
       maps            = null;
 
@@ -171,10 +174,16 @@ function main() {
   maps = options.maps;
 
   if (options.http_port != 0) {
-    webserver = start_webserver(options, shared);
+    webserver = httpserver.init(options);
   }
-
-  gameserver = start_gameserver(maps, options, shared);
+  
+  gameserver = io.listen(webserver);
+  
+  gameserver.sockets.on('connection', function(socket) {
+    socket.emit('set_state', shared.get_state());
+  });
+  
+  start_gameserver(maps, options, shared);
 
 }
 
@@ -1019,32 +1028,6 @@ var process_game_message = match (
   }
 
 );
-
-/**
- *  Starts a webserver that serves WPilot client related files.
- *  @param {Object} options Web server options.
- *  @return {http.Server} Returns the HTTP server instance.
- */
-function start_webserver(options, shared) {
-  sys.puts('Starting HTTP server at http://' + options.host + ':' + options.http_port);
-  var server = fu.listen(parseInt(options.http_port), options.host);
-
-  for (var i=0; i < CLIENT_DATA.length; i++) {
-    var virtualpath = CLIENT_DATA[i + 1] + path.basename(CLIENT_DATA[i]);
-    fu.get('/' + virtualpath, fu.staticHandler(CLIENT_DATA[i]));
-    i++;
-  }
-
-  fu.get('/', fu.staticHandler(CLIENT_DATA[0]));
-
-  fu.get('/state', function (req, res) {
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    res.write(JSON.stringify(shared.get_state()), 'utf8');
-    res.end();
-  });
-
-  return server;
-}
 
 /**
  *  Filters all rules from a options dict
