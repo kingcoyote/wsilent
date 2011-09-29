@@ -165,7 +165,8 @@ function main() {
   var options         = parse_options(),
       shared          = { get_state: function() {} },
       policy_server   = null,
-      maps            = null;
+      maps            = null,
+      world;
 
   if (!options) return;
 
@@ -182,6 +183,101 @@ function main() {
   gameserver.sockets.on('connection', function(socket) {
     socket.emit('return_server_info', shared.get_state());
     
+    // set up all that extra shit
+    // need to get player and world in scope for some callbacks
+    socket.set_state = function(new_state) {
+      switch (new_state) {
+  
+        case CONNECTED:
+          if (no_connections++ > options.max_connections) {
+            socket.close('Server busy');
+            return;
+          }
+  
+          while (sockets[++connection_id]);
+  
+          socket.id = connection_id;
+          socket.player = null;
+          socket.player_name = null;
+          socket.is_admin = false;
+          socket.rate = options.max_rate;
+          socket.update_rate = 2;
+          socket.max_rate = options.max_rate;
+          socket.last_rate_check = get_time();
+          socket.last_ping = 0;
+          socket.ping = 0;
+          socket.data_sent = 0;
+          socket.dimensions = [640, 480];
+          socket.state = IDLE;
+          socket.debug = options.debug;
+  
+          sockets[socket.id] = socket;
+  
+          break;
+  
+        case HANDSHAKING:
+          if (!gameloop) {
+            start_gameloop();
+          }
+  
+          if (world.no_players >= world.max_players) {
+            socket.close('Server is full');
+          } else {
+            socket.emit('set_world_data', {"map_data":world.map_data, "rules":world.rules});
+          }
+          break;
+  
+        case JOINED:
+          var playeridincr = 0;
+  
+          while (world.players[++playeridincr]);
+  
+          socket.player = world.add_player(playeridincr, socket.player_name);
+
+          socket.emit('set_world_state', {"id":socket.player.id}.concat(world.get_repr()));
+          
+          log(socket + socket.player_name + ' joined the game.');
+          break;
+  
+        case DISCONNECTED:
+          if (socket.id && sockets[socket.id]) {
+            delete sockets[socket.id];
+  
+            no_connections--;
+  
+            if (socket.player) {
+              world.remove_player(socket.player.id, disconnect_reason);
+              socket.player = null;
+              log(socket + ' left the game (Reason: ' + disconnect_reason + ')');
+            }
+  
+            if (world.no_players == 0) {
+              stop_gameloop();
+            }
+          }
+          break;
+      }
+  
+      socket.state = new_state;
+    };
+  
+    socket.close = function(reason){
+      socket.set_state(DISCONNECTED);
+    };
+    
+    socket.set_client_info = function(info) {
+      socket.rate = Math.min(info.rate, options.max_rate);
+      socket.player_name = info.name;
+      socket.dimensions = info.dimensions;
+    }
+    
+    socket.chat = function(message) {
+      io.sockets.emit('player_say', {"player_id":socket.player.id, "message":message});
+      log('Chat ' + socket.player.id + ': ' + message);
+    };
+    
+    socket.exec = function() {};
+    
     socket.on('handshake', function(data){
       if(data.version != VERSION) {
         socket.close();
@@ -191,13 +287,81 @@ function main() {
     });
     
     socket.on('request_server_info', function(){
-      return shared.get_state();
+      socket.emit('return_server_info', shared.get_state());
     });
     
+    socket.on('join', function(data){
+      socket.set_client_info(data.info);
+      socket.set_state(JOINED);
+    });
     
+    socket.on('message', function(data) {
+      if(data.message.length < 200) {
+        socket.chat(data.message);
+      }
+    });
+    
+    socket.on('set_rate', function(data){
+      socket.rate = Math.min(data.rate, socket.max_rate);
+    });
+    
+    socket.on('set_ready', function(data) {
+      world.set_player_ready(socket.player.id);
+    });
+    
+    socket.on('set_name', function(data){
+      world.set_player_name(socket.player.id, data.name);
+    });
+    
+    socket.on('command_state_change', function(data){
+      socket.player.action = data.action;
+      if (!socket.player.dead) {
+        socket.player.ship.angle = data.angle;
+      }
+    });
+    
+    socket.on('exec', function(data){
+      switch(data.command) {
+        case 'kick':
+          resp = socket.exec('kick', data.player_name, data.reason);
+          break;
+        case 'map':
+          load_map(data.path, false, function(err) {
+            if (err) {
+              conn.post([OP_SERVER_EXEC_RESP, err]);
+              socket.write('server_message', {"message":err});
+            } else {
+              io.sockets.emit('set_state', {"state":OP_WORLD_RECONNECT});
+            }
+          });
+          resp = 'Loading map';
+          break;
+        case 'warmup':
+          switch (world.r_state) {
+            case ROUND_WARMUP:
+              resp = 'Already in warmup mode';
+            case ROUND_RUNNING:
+            case ROUND_STARTING:
+              world.set_round_state(ROUND_WARMUP);
+              resp = 'Changed';
+              break;
+            case ROUND_FINISHED:
+              resp = 'Game has already finished';
+              break;
+          }
+          break;
+        case 'start':
+          resp = socket.exec('start');
+          break;
+        case 'restart':
+          resp = socket.exec('restart');
+          break;
+      }
+      socket.emit('exec_resp', {"resp":resp});
+    });
   });
   
-  start_gameserver(maps, options, shared, gameserver);
+  world = start_gameserver(maps, options, shared, gameserver);
 }
 
 /**
@@ -353,8 +517,7 @@ function start_gameserver(maps, options, shared, gameserver) {
    */
   function stop_gameloop(reason) {
     for (var id in connections) {
-      connections[id].kill(reason || 'Server is shutting down');
-      connections[id].emit('close', {"reason":reason});
+      connections[id].close();
     }
 
     if (gameloop) {
@@ -605,28 +768,28 @@ function start_gameserver(maps, options, shared, gameserver) {
     /**
      *  Sets client's information.
      */
-    conn.set_client_info = function(info) {
+    /*conn.set_client_info = function(info) {
       conn.rate = Math.min(info.rate, options.max_rate);
       conn.player_name = info.name;
       conn.dimensions = info.dimensions;
-    }
+    }*/
 
-    conn.send_server_info = function() {
+    /*conn.send_server_info = function() {
       if (conn.debug) {
         log('Debug: Sending server state to ' + conn);
       }
       conn.post([OP_SERVER_INFO, shared.get_state()]);
-    }
+    }*/
 
     /**
      *  Sends a chat message
      */
-    conn.chat = function(message) {
+    /*conn.chat = function(message) {
       if (conn.player) {
         broadcast(OP_PLAYER_SAY, conn.player.id, message);
         log('Chat ' + conn.player.id + ': ' + message);
       }
-    }
+    }*/
 
     conn.auth = function(password) {
       conn.is_admin = password == options.admin_password ? true : false;
@@ -637,7 +800,7 @@ function start_gameserver(maps, options, shared, gameserver) {
       var args = Array.prototype.slice.call(arguments);
       var command = args.shift();
       switch (command) {
-        case 'map':
+        /*case 'map':
           var path = args.shift();
           load_map(path, false, function(err) {
             if (err) {
@@ -650,7 +813,7 @@ function start_gameserver(maps, options, shared, gameserver) {
               }
             }
           });
-          return 'Loading map';
+          return 'Loading map';*/
 
         case 'warmup':
           switch (world.r_state) {
@@ -938,7 +1101,7 @@ var process_control_message = match (
     } else {
       conn.set_state(HANDSHAKING);
     }
-  },
+  }, //'connection'
 
   /**
    *  Client has received world data. Client is now a player of the world.
@@ -947,7 +1110,7 @@ var process_control_message = match (
   function(info, conn) {
     conn.set_client_info(info);
     conn.set_state(JOINED);
-  },
+  }, //'join'
 
   [[OP_CLIENT_SAY, String], {'state =': JOINED}],
   function(message, conn) {
@@ -956,12 +1119,12 @@ var process_control_message = match (
     } else {
       conn.chat(message);
     }
-  },
+  },//message
 
   [[OP_CLIENT_SET, 'rate', Number], {'state =': JOINED}],
   function(rate, conn) {
     conn.rate = Math.min(rate, conn.max_rate);
-  },
+  }, //set_rate
 
   [[OP_CLIENT_EXEC, String, 'kick', String, String], {'state =': JOINED}],
   function(password, player_name, reason, conn) {
