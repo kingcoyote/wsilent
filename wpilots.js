@@ -180,7 +180,21 @@ function main() {
   gameserver = io.listen(webserver);
   
   gameserver.sockets.on('connection', function(socket) {
-    socket.emit('set_state', shared.get_state());
+    socket.emit('return_server_info', shared.get_state());
+    
+    socket.on('handshake', function(data){
+      if(data.version != VERSION) {
+        socket.close();
+      } else {
+        socket.set_state(HANDSHAKING);
+      }
+    });
+    
+    socket.on('request_server_info', function(){
+      return shared.get_state();
+    });
+    
+    
   });
   
   start_gameserver(maps, options, shared, gameserver);
@@ -292,17 +306,27 @@ function start_gameserver(maps, options, shared, gameserver) {
   }
 
   world.on_player_leave = function(player, reason) {
-    broadcast(OP_PLAYER_DISCONNECT, player.id, reason);
+    //broadcast(OP_PLAYER_DISCONNECT, player.id, reason);
+    gameserver.sockets.emit('player_disconnect', {"id":player.id, "reason":reason});
   }
 
   world.on_powerup_spawn = function(powerup) {
-    broadcast(OP_POWERUP_SPAWN, powerup.powerup_id,
+    /*broadcast(OP_POWERUP_SPAWN, powerup.powerup_id,
                                powerup.powerup_type,
-                               powerup.pos);
+                               powerup.pos);*/
+    gameserver.sockets.emit(
+      'powerup_spawn', 
+      {
+        "id":powerup.powerup_id, 
+        "type":powerup.powerup_type, 
+        "pos":powerup.pos
+      }
+    );
   }
 
   world.on_powerup_die = function(powerup, player) {
-    broadcast(OP_POWERUP_DIE, powerup.powerup_id, player.id);
+    //broadcast(OP_POWERUP_DIE, powerup.powerup_id, player.id);
+    gameserver.sockets.emit('powerup_die', {"powerup_id":powerup.powerup_id, "player_id":player.id});
   }
 
   /**
@@ -330,6 +354,7 @@ function start_gameserver(maps, options, shared, gameserver) {
   function stop_gameloop(reason) {
     for (var id in connections) {
       connections[id].kill(reason || 'Server is shutting down');
+      connections[id].emit('close', {"reason":reason});
     }
 
     if (gameloop) {
@@ -349,10 +374,10 @@ function start_gameserver(maps, options, shared, gameserver) {
         continue;
       }
 
-      if (connection.last_ping + 2000 < time) {
+      /*if (connection.last_ping + 2000 < time) {
         connection.last_ping = time;
         connection.write(JSON.stringify([PING_PACKET]));
-      }
+      }*/
       if (update_tick % connection.update_rate != 0) {
         continue;
       }
@@ -362,11 +387,13 @@ function start_gameserver(maps, options, shared, gameserver) {
         if (player.ship) {
           message.push(pack_vector(player.ship.pos), player.ship.angle,
                                                        player.ship.action);
-          connection.queue(message);
+          //connection.queue(message);
+          connection.emit('player_state_change'); //FIX
         }
         if (update_tick % 200 == 0) {
           var player_connection = connection_for_player(player);
           connection.queue([OP_PLAYER_INFO, player.id, player_connection.ping]);
+          connection.emit('player_info_change'); //FIX
         }
 
       }
@@ -377,7 +404,7 @@ function start_gameserver(maps, options, shared, gameserver) {
    *  Flushes all connection queues.
    *  @return {undefined} Nothing
    */
-  function flush_queues() {
+  /*function flush_queues() {
     for (var id in connections) {
       var connection = connections[id];
 
@@ -387,7 +414,7 @@ function start_gameserver(maps, options, shared, gameserver) {
 
       connection.flush_queue();
     }
-  }
+  }*/
 
   /**
    *  Check game rules
@@ -442,6 +469,7 @@ function start_gameserver(maps, options, shared, gameserver) {
               if (conn.state == JOINED) {
                 conn.write(JSON.stringify([OP_WORLD_RECONNECT]));
                 conn.set_state(HANDSHAKING);
+                connection.emit('world_reconnect'); //FIX
               }
             }
           });
@@ -456,12 +484,12 @@ function start_gameserver(maps, options, shared, gameserver) {
    *  @param {String} msg The message to broadcast.
    *  @return {undefined} Nothing
    */
-  function broadcast() {
+  /*function broadcast() {
     var msg = Array.prototype.slice.call(arguments);
     for(var id in connections) {
       connections[id].queue(msg);
     }
-  }
+  }*/
 
   /**
    *  Broadcast, but calls specified callback for each connection
@@ -469,7 +497,7 @@ function start_gameserver(maps, options, shared, gameserver) {
    *  @param {Function} callback A callback function to call for each connection
    *  @return {undefined} Nothing
    */
-  function broadcast_each(msg, callback) {
+  /*function broadcast_each(msg, callback) {
     for(var id in connections) {
       var conn = connections[id];
       if (conn.state == JOINED) {
@@ -477,7 +505,7 @@ function start_gameserver(maps, options, shared, gameserver) {
         if (prio) conn.queue(msg);
       }
     }
-  }
+  }*/
 
   /**
    *  pad single digit numbers with leading zero
@@ -897,7 +925,7 @@ var process_control_message = match (
   [[OP_REQ_SERVER_INFO], {'state =': CONNECTED}],
   function(conn) {
     conn.send_server_info();
-  },
+  }, //'request_server_info'
 
   /**
    *  MUST be sent by the client when connected to server. It's used to validate
