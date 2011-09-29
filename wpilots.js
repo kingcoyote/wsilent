@@ -183,8 +183,7 @@ function main() {
     socket.emit('set_state', shared.get_state());
   });
   
-  start_gameserver(maps, options, shared);
-
+  start_gameserver(maps, options, shared, gameserver);
 }
 
 /**
@@ -193,7 +192,7 @@ function main() {
  *  @returns {WebSocketServer} Returns the newly created WebSocket server
  *                             instance.
  */
-function start_gameserver(maps, options, shared) {
+function start_gameserver(maps, options, shared, gameserver) {
   var connections     = {},
       no_connections  = 0,
       gameloop        = null,
@@ -247,13 +246,14 @@ function start_gameserver(maps, options, shared) {
 
   // Listen for round state changes
   world.on_round_state_changed = function(state, winners) {
-    broadcast(OP_ROUND_STATE, state, winners);
+    //broadcast(OP_ROUND_STATE, state, winners);
+    gameserver.sockets.emit('round_state_change', { "state":state,"winners":winners });
   }
 
   // Listen for events on player
   world.on_player_join = function(player) {
     player.name = get_unique_name(world.players, player.id, player.name);
-    broadcast_each(
+    /*broadcast_each(
       [OP_PLAYER_CONNECT, player.id, player.name],
       function(msg, conn) {
         if (conn.player && conn.player.id == player.id) {
@@ -261,28 +261,34 @@ function start_gameserver(maps, options, shared) {
         }
         return PRIO_HIGH;
       }
-    );
+    );*/
+    gameserver.sockets.emit('player_connect', { "id":player.id, "name":player.name });
   }
 
   world.on_player_spawn = function(player, pos) {
-    broadcast(OP_PLAYER_SPAWN, player.id, pos);
+    //broadcast(OP_PLAYER_SPAWN, player.id, pos);
+    gameserver.sockets.emit('player_spawn', { "id":player.id, "pos":pos });
   }
 
   world.on_player_died = function(player, old_entity, death_cause, killer) {
-    broadcast(OP_PLAYER_DIE, player.id, death_cause, killer ? killer.id : -1);
+    //broadcast(OP_PLAYER_DIE, player.id, death_cause, killer ? killer.id : -1);
+    gameserver.sockets.emit('player_die', {"id":player.id, "death_cause":death_cause});
   }
 
   world.on_player_ready = function(player) {
-    broadcast(OP_PLAYER_INFO, player.id, 0, true);
+    //broadcast(OP_PLAYER_INFO, player.id, 0, true);
+    gameserver.sockets.emit('player_info_change'); //FIX
   }
 
   world.on_player_name_changed = function(player, new_name, old_name) {
     player.name = get_unique_name(world.players, player.id, new_name);
-    broadcast(OP_PLAYER_INFO, player.id, 0, 0, player.name);
+    //broadcast(OP_PLAYER_INFO, player.id, 0, 0, player.name);
+    gameserver.sockets.emit('player_info_change'); //FIX
   }
 
   world.on_player_fire = function(player, angle, pos, vel, powerup) {
-   broadcast(OP_PLAYER_FIRE, player); 
+   //broadcast(OP_PLAYER_FIRE, player); 
+   gameserver.sockets.emit('player_fire', {"player":player});
   }
 
   world.on_player_leave = function(player, reason) {
