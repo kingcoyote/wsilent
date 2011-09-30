@@ -603,11 +603,15 @@ WPilotClient.prototype.join = function(url) {
     
     this.set_state(CLIENT_CONNECTED);
     
+    socket.on('set_world_data', function() {
+      
+    });
+    
     socket.on('set_world_state', function(data) {
-      var world = new World(false);
-      world.build(data[1], data[0]);
-      self.set_world(world);
-      self.set_state(CLIENT_CONNECTED);
+      client = self;
+      client.world.set_state(data[0], data[1], data[2]);
+      client.set_player(client.world.players[data.id]);
+      client.start_gameloop(client.world.tick);
     });
     
     /**
