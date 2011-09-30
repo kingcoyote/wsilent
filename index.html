@@ -40,18 +40,6 @@
 			 *  Is called when the document is loaded and ready. Creates a new client.
 			 */
 			$(document).ready(function() {
-				socket = io.connect(location.origin);
-
-			  socket.on('set_state_data', function(state) {
-          var ping = ((new Date()) - startime);
-          $('#splash .notice').css('display', 'none');
-          $('#splash .server-info h2').html(state.server_name + '<span>' + state.game_server_url + '</span>');
-          $('#splash .server-info .ping').html('Response time (http)<span>' + ping + ' ms</span>');
-          $('#splash .server-info .map').html('Map name<span>' + state.map_name + '</span>');
-          $('#splash .server-info .players').html('Connected players<span>' + state.no_players + ' of ' + state.max_players + '</span>');
-          $('#splash .server-info button').data('url', state.game_server_url);
-          $('#splash .server-info').css('display', 'block');
-        });
 				
 				if (WebSocket.__initialize && swfobject.getFlashPlayerVersion()['major'] < 1) {
 					return unsupported('Your browser doesnt support WebSocket or Flash');
@@ -88,9 +76,23 @@
 			        .css('display', 'block')
 			        .text('Contacting server, please wait...');
 					var startime = new Date();
+
+	        socket = io.connect(location.origin);
+
+	        socket.on('return_server_info', function(state) {
+            var ping = ((new Date()) - startime);
+            $('#splash .notice').css('display', 'none');
+            $('#splash .server-info h2').html(state.server_name + '<span>' + state.game_server_url + '</span>');
+            $('#splash .server-info .ping').html('Response time (http)<span>' + ping + ' ms</span>');
+            $('#splash .server-info .map').html('Map name<span>' + state.map_name + '</span>');
+            $('#splash .server-info .players').html('Connected players<span>' + state.no_players + ' of ' + state.max_players + '</span>');
+            $('#splash .server-info button').data('url', state.game_server_url);
+            $('#splash .server-info').css('display', 'block');
+          });
 			  });
 
 			  $('#splash .server-info button').click(function(e) {
+			    
 					e.preventDefault();
 			    var url = $(this).data('url');
 				  var viewport  = new ViewportDevice(canvas[0], canvas.width(), canvas.height(), options),

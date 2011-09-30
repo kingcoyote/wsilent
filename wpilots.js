@@ -233,8 +233,15 @@ function main() {
           while (world.players[++playeridincr]);
   
           socket.player = world.add_player(playeridincr, socket.player_name);
-
-          socket.emit('set_world_state', {"id":socket.player.id}.concat(world.get_repr()));
+          
+          info = {"id":socket.player.id};
+          repr = world.get_repr();
+          
+          for(i in repr) {
+            info[i] = repr[i];
+          }
+          
+          socket.emit('set_world_state', info);
           
           log(socket + socket.player_name + ' joined the game.');
           break;
@@ -291,7 +298,7 @@ function main() {
     });
     
     socket.on('join', function(data){
-      socket.set_client_info(data.info);
+      socket.set_client_info(data);
       socket.set_state(JOINED);
     });
     
@@ -321,9 +328,16 @@ function main() {
     });
     
     socket.on('exec', function(data){
+      var resp;
       switch(data.command) {
         case 'kick':
-          resp = socket.exec('kick', data.player_name, data.reason);
+          world.forEachPlayer(function(player) {
+            if (player.name == data.player.name) {
+              var player_socket = connection_for_player(player);
+              player_socket.kill(data.reason);
+              resp = "Player kicked";
+            }
+          });
           break;
         case 'map':
           load_map(data.path, false, function(err) {
@@ -351,10 +365,35 @@ function main() {
           }
           break;
         case 'start':
-          resp = socket.exec('start');
+          switch (world.r_state) {
+            case ROUND_WARMUP:
+              world.set_round_state(ROUND_STARTING);
+              resp = "Changed";
+              break;
+            case ROUND_STARTING:
+              world.set_round_state(ROUND_RUNNING);
+              resp = "Changed";
+              break;
+            case ROUND_RUNNING:
+              resp = 'Game is already started. Type sv_restart to restart';
+            case ROUND_FINISHED:
+              resp = 'Game has already finished';
+          }
           break;
         case 'restart':
-          resp = socket.exec('restart');
+          switch (world.r_state) {
+            case ROUND_WARMUP:
+            case ROUND_STARTING:
+              resp = 'Cannot restart warmup round';
+            case ROUND_RUNNING:
+              world.set_round_state(ROUND_STARTING);
+              break;
+              resp = 'Changed';
+            case ROUND_FINISHED:
+              world.set_round_state(ROUND_STARTING);
+              break;
+              resp = 'Changed';
+          }
           break;
       }
       socket.emit('exec_resp', {"resp":resp});
@@ -815,7 +854,7 @@ function start_gameserver(maps, options, shared, gameserver) {
           });
           return 'Loading map';*/
 
-        case 'warmup':
+        /*case 'warmup':
           switch (world.r_state) {
             case ROUND_WARMUP:
               return 'Already in warmup mode';
@@ -826,9 +865,9 @@ function start_gameserver(maps, options, shared, gameserver) {
             case ROUND_FINISHED:
               return 'Game has already finished';
           }
-          return 'Changed';
+          return 'Changed';*/
 
-        case 'start':
+        /*case 'start':
           switch (world.r_state) {
             case ROUND_WARMUP:
               world.set_round_state(ROUND_STARTING);
@@ -841,9 +880,9 @@ function start_gameserver(maps, options, shared, gameserver) {
             case ROUND_FINISHED:
               return 'Game has already finished';
           }
-          return 'Changed';
+          return 'Changed';*/
 
-        case 'restart':
+        /*case 'restart':
           switch (world.r_state) {
             case ROUND_WARMUP:
             case ROUND_STARTING:
@@ -855,9 +894,9 @@ function start_gameserver(maps, options, shared, gameserver) {
               world.set_round_state(ROUND_STARTING);
               break;
           }
-          return 'Changed';
+          return 'Changed';*/
 
-        case 'kick':
+        /*case 'kick':
           var name = args.shift();
           var reason = args.shift();
           world.forEachPlayer(function(player) {
@@ -867,41 +906,41 @@ function start_gameserver(maps, options, shared, gameserver) {
               return "Player kicked";
             }
           })
-          return "Player not found";
+          return "Player not found";*/
       }
     }
 
     /**
      *  Forces a connection to be disconnected.
      */
-    conn.kill = function(reason) {
+    /*conn.kill = function(reason) {
       disconnect_reason = reason || 'Unknown Reason';
       this.post([OP_DISCONNECT_REASON, disconnect_reason]);
       this.close();
       message_queue = [];
-    }
+    }*/
 
     /**
      *  Queues the specified message and sends it on next flush.
      */
-    conn.queue = function(msg) {
+    /*conn.queue = function(msg) {
       if (conn.state == JOINED) {
         message_queue.push(msg);
       }
-    }
+    }*/
 
     /**
      *  Stringifies specified object and sends it to remote part.
      */
-    conn.post = function(data) {
+    /*conn.post = function(data) {
       var packet = JSON.stringify(data);
       this.write(packet);
-    }
+    }*/
 
     /**
      *  Posts specified data to this instances message queue
      */
-    conn.flush_queue = function() {
+    /*conn.flush_queue = function() {
       var now = get_time();
           msg = null,
           data_sent = 6,
@@ -929,12 +968,12 @@ function start_gameserver(maps, options, shared, gameserver) {
       }
 
       message_queue = [];
-    }
+    }*/
 
     /**
      *  Sets the state of the connection
      */
-    conn.set_state = function(new_state) {
+    /*conn.set_state = function(new_state) {
       switch (new_state) {
 
         case CONNECTED:
@@ -1016,7 +1055,7 @@ function start_gameserver(maps, options, shared, gameserver) {
       }
 
       conn.state = new_state;
-    }
+    }*/
 
     /**
      *  Returns a String representation for this Connection
@@ -1027,13 +1066,13 @@ function start_gameserver(maps, options, shared, gameserver) {
 
     // Connection 'connect' event handler. Challenge the player and creates
     // a new PlayerSession.
-    conn.addListener('connect', function(resource) {
+    /*conn.addListener('connect', function(resource) {
       conn.set_state(CONNECTED);
-    });
+    });*/
 
     // Connection 'receive' event handler. Occures each time that client sent
     // a message to the server.
-    conn.addListener('data', function(data) {
+    /*conn.addListener('data', function(data) {
       var packet = null;
 
       try {
@@ -1062,13 +1101,13 @@ function start_gameserver(maps, options, shared, gameserver) {
           break;
 
       }
-    });
+    });*/
 
     // Connection 'close' event listener. Occures when the connection is
     // closed by user or server.
-    conn.addListener('close', function() {
+    /*conn.addListener('close', function() {
       conn.set_state(DISCONNECTED);
-    });
+    });*/
 
   });
 
@@ -1077,7 +1116,7 @@ function start_gameserver(maps, options, shared, gameserver) {
     server.listen(parseInt(options.ws_port), options.host);
   });
 
-  return server;
+  return world;
 }
 
 /**
@@ -1085,48 +1124,48 @@ function start_gameserver(maps, options, shared, gameserver) {
  */
 var process_control_message = match (
 
-  [[OP_REQ_SERVER_INFO], {'state =': CONNECTED}],
+  /*[[OP_REQ_SERVER_INFO], {'state =': CONNECTED}],
   function(conn) {
     conn.send_server_info();
-  }, //'request_server_info'
+  }, //'request_server_info' */
 
   /**
    *  MUST be sent by the client when connected to server. It's used to validate
    *  the session.
    */
-  [[OP_CLIENT_CONNECT, String], {'state =': CONNECTED}],
+  /*[[OP_CLIENT_CONNECT, String], {'state =': CONNECTED}],
   function(version, conn) {
     if (version != SERVER_VERSION) {
       conn.kill('Wrong version');
     } else {
       conn.set_state(HANDSHAKING);
     }
-  }, //'connection'
+  }, //'connection' */
 
   /**
    *  Client has received world data. Client is now a player of the world.
    */
-  [[OP_CLIENT_JOIN, Object], {'state =': HANDSHAKING}],
+  /*[[OP_CLIENT_JOIN, Object], {'state =': HANDSHAKING}],
   function(info, conn) {
     conn.set_client_info(info);
     conn.set_state(JOINED);
-  }, //'join'
+  }, //'join' */
 
-  [[OP_CLIENT_SAY, String], {'state =': JOINED}],
+  /*[[OP_CLIENT_SAY, String], {'state =': JOINED}],
   function(message, conn) {
     if (message.length > 200) {
       conn.kill('Bad chat message');
     } else {
       conn.chat(message);
     }
-  },//message
+  },//message*/
 
-  [[OP_CLIENT_SET, 'rate', Number], {'state =': JOINED}],
+  /*[[OP_CLIENT_SET, 'rate', Number], {'state =': JOINED}],
   function(rate, conn) {
     conn.rate = Math.min(rate, conn.max_rate);
-  }, //set_rate
+  }, //set_rate*/
 
-  [[OP_CLIENT_EXEC, String, 'kick', String, String], {'state =': JOINED}],
+  /*[[OP_CLIENT_EXEC, String, 'kick', String, String], {'state =': JOINED}],
   function(password, player_name, reason, conn) {
     if (conn.auth(password)) {
       var resp = conn.exec('kick', player_name, reason);
@@ -1173,7 +1212,7 @@ var process_control_message = match (
     } else {
       conn.post([OP_SERVER_EXEC_RESP, 'Wrong password']);
     }
-  },
+  },*/
 
   function(data) {
     sys.puts(data);
@@ -1188,26 +1227,26 @@ var process_control_message = match (
  */
 var process_game_message = match (
 
-  [[OP_CLIENT_SET, 'ready'], _, _],
+  /*[[OP_CLIENT_SET, 'ready'], _, _],
   function(player, world) {
     world.set_player_ready(player.id);
-  },
+  },*/
 
-  [[OP_CLIENT_SET, 'name', String], _, _],
+  /*[[OP_CLIENT_SET, 'name', String], _, _],
   function(name, player, world) {
     world.set_player_name(player.id, name);
-  },
+  },*/
 
   /**
    *  Players command state has changed.
    */
-  [[OP_CLIENT_STATE, Number, Number], _, _],
+  /*[[OP_CLIENT_STATE, Number, Number], _, _],
   function(action, angle, player, world) {
     player.action = action;
     if (!player.dead) {
       player.ship.angle = angle;
     }
-  },
+  },*/
 
   /**
    *  The message sent by the client could not be matched. Kill the session
@@ -1322,6 +1361,18 @@ function mixin(a, b) {
   }
 
   return result;
+}
+
+function log(msg) {
+  var now = new Date();
+  sys.puts(pad0(now.getHours()) + ':' + pad0(now.getMinutes()) + ':' +
+           pad0(now.getSeconds()) + ' ' + msg);
+}
+
+function pad0 (num) {
+  return (num < 10)
+    ? '0'+num
+    : num;
 }
 
 // Call programs entry point

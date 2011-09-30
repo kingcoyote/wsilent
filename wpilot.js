@@ -255,7 +255,8 @@ WPilotClient.prototype.log = function(msg, color) {
  *  @return {undefined} Nothing
  */
 WPilotClient.prototype.exec = function() {
-  COMMANDS.call(null, [this].concat(Array.prototype.slice.call(arguments)));
+  //COMMANDS.call(null, [this].concat(Array.prototype.slice.call(arguments)));
+  socket.emit('exec', [this].concat(Array.prototype.slice.call(arguments)));
 };
 
 /**
@@ -265,10 +266,11 @@ WPilotClient.prototype.exec = function() {
  */
 WPilotClient.prototype.chat = function(message) {
   if (this.state == CLIENT_CONNECTED) {
-    this.post_control_packet([OP_CLIENT_SAY,
+    /*this.post_control_packet([OP_CLIENT_SAY,
                               message.length > CHAT_MAX_CHARS ?
                               message.substr(0, CHAT_MAX_CHARS) :
-                              message]);
+                              message]);*/
+    socket.emit('chat', {"message":message});
   }
 };;
 
@@ -396,7 +398,8 @@ WPilotClient.prototype.set_server_state = function(state) {
   if (state.no_players != state.max_players) {
     this.server_state = state;
     this.log('Recived server state, now joining game...');
-    this.post_control_packet([OP_CLIENT_CONNECT, CLIENT_VERSION]);
+    //this.post_control_packet([OP_CLIENT_CONNECT, CLIENT_VERSION]);
+    socket.emit('handshake', {version:CLIENT_VERSION});
   } else {
     this.log('Server is full');
   }
@@ -417,12 +420,17 @@ WPilotClient.prototype.set_state = function(state) {
       break;
 
     case CLIENT_CONNECTED:
-      this.log('Joined server ' + this.conn.URL + '...');
-      this.post_control_packet([OP_CLIENT_JOIN, {
+      //this.log('Joined server ' + this.conn.URL + '...');
+      /*this.post_control_packet([OP_CLIENT_JOIN, {
         name: this.options.name,
         rate: this.options.rate,
         dimensions: [this.viewport.w, this.viewport.h]
-      }]);
+      }]);*/
+      socket.emit('join', {
+        name: this.options.name,
+        rate: this.options.rate,
+        dimensions: [this.viewport.w, this.viewport.h]
+      });
       break;
 
     case CLIENT_DISCONNECTED:
@@ -474,7 +482,8 @@ WPilotClient.prototype.process_user_input = function(t, dt) {
   }
 
   if (input.toggle('ready')) {
-    this.post_game_packet([OP_CLIENT_SET, 'ready']);
+    //this.post_game_packet([OP_CLIENT_SET, 'ready']);
+    socket.emit('set_ready');
   }
 
   if (!player.dead && player.ship.visible) {
@@ -519,7 +528,8 @@ WPilotClient.prototype.process_user_input = function(t, dt) {
 
       player.action = new_action;
       player.ship.angle = new_angle;
-      this.post_game_packet([OP_CLIENT_STATE, new_action, new_angle]);
+      //this.post_game_packet([OP_CLIENT_STATE, new_action, new_angle]);
+      socket.emit('command_state_change', {"action":new_action, "angle":new_angle});
     }
   }
 };
@@ -588,28 +598,37 @@ WPilotClient.prototype.join = function(url) {
   if (!self.is_connected) {
     self.disconnect_reason = 'Unknown reason';
     this.log('Trying to join server at ' + url + '...');
-    self.socket = io.connect(url);
-    self.conn = new WebSocket(url);
-
+    //self.socket = io.connect(url);
+    //self.conn = new WebSocket(url);
+    
+    this.set_state(CLIENT_CONNECTED);
+    
+    socket.on('set_world_state', function(data) {
+      var world = new World(false);
+      world.build(data[1], data[0]);
+      self.set_world(world);
+      self.set_state(CLIENT_CONNECTED);
+    });
+    
     /**
      *  Override the onopen event of the WebSocket instance.
      *  @param {WebSocketEvent} event The websocket event object.
      *  @returns {undefined} Nothing
      */
-    self.conn.onopen = function(event){
+    /*self.conn.onopen = function(event){
       self.is_connected = true;
       self.set_state(CLIENT_CONNECTING);
       setTimeout(function() {
         self.conn.send(JSON.stringify([OP_REQ_SERVER_INFO]));
       }, 100);
-    };
+    };*/
 
     /**
      *  Override the onmessage event of the WebSocket instance.
      *  @param {WebSocketEvent} event The websocket event object.
      *  @returns {undefined} Nothing
      */
-    self.conn.onmessage = function(event) {
+    /*self.conn.onmessage = function(event) {
       var packet        = JSON.parse(event.data);
       switch (packet[0]) {
 
@@ -645,16 +664,16 @@ WPilotClient.prototype.join = function(url) {
           break;
       }
 
-    };
+    };*/
 
     /**
      *  Override the onclose event of the WebSocket instance.
      *  @param {WebSocketEvent} event The websocket event object.
      *  @returns {undefined} Nothing
      */
-    self.conn.onclose = function(event){
+    /*self.conn.onclose = function(event){
       self.set_state(CLIENT_DISCONNECTED);
-    };
+    };*/
 
   }
 
