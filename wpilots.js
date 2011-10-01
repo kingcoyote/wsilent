@@ -166,7 +166,15 @@ function main() {
       shared          = { get_state: function() {} },
       policy_server   = null,
       maps            = null,
-      world;
+      world,
+      sockets         = {},
+      socket_id       = 0,
+      no_connections  = 0,
+      gameloop        = null,
+      world           = null,
+      server          = null,
+      update_tick     = 1,
+      next_map_index  = 0;
 
   if (!options) return;
 
@@ -194,9 +202,9 @@ function main() {
             return;
           }
   
-          while (sockets[++connection_id]);
+          while (sockets[++socket_id]);
   
-          socket.id = connection_id;
+          socket.id = socket_id;
           socket.player = null;
           socket.player_name = null;
           socket.is_admin = false;
@@ -267,7 +275,9 @@ function main() {
   
       socket.state = new_state;
     };
-  
+    
+    socket.set_state(CONNECTED);
+    
     socket.close = function(reason){
       socket.set_state(DISCONNECTED);
     };
@@ -286,7 +296,7 @@ function main() {
     socket.exec = function() {};
     
     socket.on('handshake', function(data){
-      if(data.version != VERSION) {
+      if(data.version != SERVER_VERSION) {
         socket.close();
       } else {
         socket.set_state(HANDSHAKING);
@@ -399,24 +409,6 @@ function main() {
       socket.emit('exec_resp', {"resp":resp});
     });
   });
-  
-  world = start_gameserver(maps, options, shared, gameserver);
-}
-
-/**
- *  Starts the web socket game server.
- *  @param {GameOptions} options Game options.
- *  @returns {WebSocketServer} Returns the newly created WebSocket server
- *                             instance.
- */
-function start_gameserver(maps, options, shared, gameserver) {
-  var connections     = {},
-      no_connections  = 0,
-      gameloop        = null,
-      world           = null,
-      server          = null,
-      update_tick     = 1,
-      next_map_index  = 0;
 
   // Is called by the web instance to get current state
   shared.get_state = function() {
@@ -444,12 +436,11 @@ function start_gameserver(maps, options, shared, gameserver) {
     world.update(t, dt);
     check_rules(t, dt);
     post_update();
-    flush_queues();
   }
 
   function connection_for_player(player) {
-    for (var connid in connections) {
-      var conn = connections[connid];
+    for (var connid in sockets) {
+      var conn = sockets[connid];
       if (conn.player && conn.player.id == player.id) {
         return conn;
       }
@@ -555,8 +546,8 @@ function start_gameserver(maps, options, shared, gameserver) {
    *  @return {undefined} Nothing
    */
   function stop_gameloop(reason) {
-    for (var id in connections) {
-      connections[id].close();
+    for (var id in sockets) {
+      sockets[id].close();
     }
 
     if (gameloop) {
@@ -568,11 +559,12 @@ function start_gameserver(maps, options, shared, gameserver) {
 
   function post_update() {
     update_tick++;
-    for (var id in connections) {
+    for (var id in sockets) {
+      
       var time = get_time();
-      var connection = connections[id];
+      var socket = sockets[id];
 
-      if (connection.state != JOINED) {
+      if (socket.state != JOINED) {
         continue;
       }
 
@@ -580,22 +572,26 @@ function start_gameserver(maps, options, shared, gameserver) {
         connection.last_ping = time;
         connection.write(JSON.stringify([PING_PACKET]));
       }*/
-      if (update_tick % connection.update_rate != 0) {
+      if (update_tick % socket.update_rate != 0) {
         continue;
       }
       for (var id in world.players) {
         var player = world.players[id];
-        var message = [OP_PLAYER_STATE, player.id];
+        //var message = [OP_PLAYER_STATE, player.id];
         if (player.ship) {
-          message.push(pack_vector(player.ship.pos), player.ship.angle,
-                                                       player.ship.action);
+          //message.push(pack_vector(player.ship.pos), player.ship.angle,
+          //                                             player.ship.action);
           //connection.queue(message);
-          connection.emit('player_state_change'); //FIX
+          socket.emit('player_state_change', { 
+            vector:pack_vector(player.ship.pos), 
+            angle:player.ship.angle, 
+            action:player.ship.action 
+          }); //FIX
         }
         if (update_tick % 200 == 0) {
           var player_connection = connection_for_player(player);
-          connection.queue([OP_PLAYER_INFO, player.id, player_connection.ping]);
-          connection.emit('player_info_change'); //FIX
+          //connection.queue([OP_PLAYER_INFO, player.id, player_connection.ping]);
+          socket.emit('player_info_change', {"id":player.id, "ping":player_connection.ping }); //FIX
         }
 
       }

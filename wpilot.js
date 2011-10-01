@@ -416,6 +416,7 @@ WPilotClient.prototype.set_state = function(state) {
 
     case CLIENT_CONNECTING:
       this.log('Server found, now joining game...');
+      socket.emit('handshake', {version:CLIENT_VERSION});
       this.onconnect();
       break;
 
@@ -601,10 +602,14 @@ WPilotClient.prototype.join = function(url) {
     //self.socket = io.connect(url);
     //self.conn = new WebSocket(url);
     
-    this.set_state(CLIENT_CONNECTED);
+    this.set_state(CLIENT_CONNECTING);
     
-    socket.on('set_world_data', function() {
-      
+    socket.on('set_world_data', function(data) {
+      var world = new World(false);
+      world.build(data.map_data, data.rules);
+      self.log('World data loaded...');
+      self.set_world(world);
+      self.set_state(CLIENT_CONNECTED);
     });
     
     socket.on('set_world_state', function(data) {
@@ -613,6 +618,33 @@ WPilotClient.prototype.join = function(url) {
       client.set_player(client.world.players[data.id]);
       client.start_gameloop(client.world.tick);
     });
+    
+    socket.on('player_spawn', function(data) {
+      self.world.spawn_player(data.id, data.pos);
+    });
+    
+    socket.on('player_fire', function(data) {
+      self.world.fire_player_cannon(data.player);
+    });
+    
+    socket.on('player_state', function() {
+      
+    });
+    
+    /*
+      this.PACKET_HANDLERS = {};
+      this.PACKET_HANDLERS[OP_ROUND_STATE] = this.set_round_state;
+      this.PACKET_HANDLERS[OP_PLAYER_CONNECT] = this.add_player;
+      this.PACKET_HANDLERS[OP_PLAYER_DISCONNECT] = this.remove_player;
+      this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
+      //this.PACKET_HANDLERS[OP_PLAYER_SPAWN] = this.spawn_player;
+      this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
+      //this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; 
+      this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
+      this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
+      this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
+      this.PACKET_HANDLERS[OP_POWERUP_DIE] = this.kill_powerup; 
+    */
     
     /**
      *  Override the onopen event of the WebSocket instance.
@@ -768,12 +800,12 @@ var process_control_message = match (
     client.set_state(CLIENT_CONNECTED);
   },
 
-  [[OP_WORLD_STATE, Number, Object, Array, Array], _],
+  /*[[OP_WORLD_STATE, Number, Object, Array, Array], _],
   function(my_id, state, players, powerups, client) {
     client.world.set_state(state, players, powerups);
     client.set_player(client.world.players[my_id]);
     client.start_gameloop(client.world.tick);
-  },
+  },*/
 
   [[OP_WORLD_RECONNECT], _],
   function(client) {
