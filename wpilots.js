@@ -356,7 +356,7 @@ function main() {
         case 'map':
           load_map(data.path, false, function(err) {
             if (err) {
-              conn.post([OP_SERVER_EXEC_RESP, err]);
+              //conn.post([OP_SERVER_EXEC_RESP, err]);
               socket.write('server_message', {"message":err});
             } else {
               gameserver.sockets.emit('set_state', {"state":OP_WORLD_RECONNECT});
@@ -671,12 +671,12 @@ function main() {
           gameloop.kill();
           load_map(null, true, function() {
             var t = 0;
-            for(var id in connections) {
-              var conn = connections[id];
+            for(var id in sockets) {
+              var conn = sockets[id];
               if (conn.state == JOINED) {
-                conn.write(JSON.stringify([OP_WORLD_RECONNECT]));
+                //conn.write(JSON.stringify([OP_WORLD_RECONNECT]));
                 conn.set_state(HANDSHAKING);
-                connection.emit('world_reconnect'); //FIX
+                //connection.emit('world_reconnect'); //FIX
               }
             }
           });

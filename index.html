@@ -41,9 +41,9 @@
 			 */
 			$(document).ready(function() {
 				
-				if (WebSocket.__initialize && swfobject.getFlashPlayerVersion()['major'] < 1) {
+				/*if (WebSocket.__initialize && swfobject.getFlashPlayerVersion()['major'] < 1) {
 					return unsupported('Your browser doesnt support WebSocket or Flash');
-				}
+				}*/
 
 				if (!supports_canvas_text()) {
 					return unsupported('Your browser doesnt support <canvas> or fillText.');

@@ -663,6 +663,10 @@ WPilotClient.prototype.join = function(url) {
       self.world.player_say(data.player_id, data.message);
     });
     
+    socket.on('disconnect', function(data) {
+      self.set_state(CLIENT_DISCONNECTED);
+    });
+    
     /*
       this.PACKET_HANDLERS = {};
       //this.PACKET_HANDLERS[OP_ROUND_STATE] = this.set_round_state;
