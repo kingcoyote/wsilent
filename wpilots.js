@@ -190,7 +190,7 @@ function main() {
   
   gameserver.sockets.on('connection', function(socket) {
     socket.emit('return_server_info', shared.get_state());
-    
+    sys.puts(socket);
     // set up all that extra shit
     // need to get player and world in scope for some callbacks
     socket.set_state = function(new_state) {
@@ -204,7 +204,6 @@ function main() {
   
           while (sockets[++socket_id]);
   
-          socket.id = socket_id;
           socket.player = null;
           socket.player_name = null;
           socket.is_admin = false;
@@ -227,7 +226,7 @@ function main() {
           if (!gameloop) {
             start_gameloop();
           }
-  
+          
           if (world.no_players >= world.max_players) {
             socket.close('Server is full');
           } else {
@@ -238,9 +237,9 @@ function main() {
         case JOINED:
           var playeridincr = 0;
   
-          while (world.players[++playeridincr]);
+          while (world.players[socket.id]);
   
-          socket.player = world.add_player(playeridincr, socket.player_name);
+          socket.player = world.add_player(socket.id, socket.player_name);
           
           info = {"id":socket.player.id};
           repr = world.get_repr();
@@ -251,7 +250,7 @@ function main() {
           
           socket.emit('set_world_state', info);
           
-          log(socket + socket.player_name + ' joined the game.');
+          log(socket + ' (' + socket.player_name + ') joined the game.');
           break;
   
         case DISCONNECTED:
@@ -261,9 +260,9 @@ function main() {
             no_connections--;
   
             if (socket.player) {
-              world.remove_player(socket.player.id, disconnect_reason);
+              world.remove_player(socket.player.id, socket.disconnect_reason);
               socket.player = null;
-              log(socket + ' left the game (Reason: ' + disconnect_reason + ')');
+              log(socket + ' left the game (Reason: ' + socket.disconnect_reason + ')');
             }
   
             if (world.no_players == 0) {
@@ -279,6 +278,7 @@ function main() {
     socket.set_state(CONNECTED);
     
     socket.close = function(reason){
+      socket.disconnect_reason = reason;
       socket.set_state(DISCONNECTED);
     };
     
@@ -289,7 +289,7 @@ function main() {
     }
     
     socket.chat = function(message) {
-      io.sockets.emit('player_say', {"player_id":socket.player.id, "message":message});
+      gameserver.sockets.emit('player_say', {"player_id":socket.player.id, "message":message});
       log('Chat ' + socket.player.id + ': ' + message);
     };
     
@@ -297,11 +297,15 @@ function main() {
     
     socket.on('handshake', function(data){
       if(data.version != SERVER_VERSION) {
-        socket.close();
+        socket.close('Wrong version');
       } else {
         socket.set_state(HANDSHAKING);
       }
     });
+    
+    socket.toString = function() {
+      return this.id;
+    };
     
     socket.on('request_server_info', function(){
       socket.emit('return_server_info', shared.get_state());
@@ -312,7 +316,7 @@ function main() {
       socket.set_state(JOINED);
     });
     
-    socket.on('message', function(data) {
+    socket.on('chat', function(data) {
       if(data.message.length < 200) {
         socket.chat(data.message);
       }
@@ -344,7 +348,7 @@ function main() {
           world.forEachPlayer(function(player) {
             if (player.name == data.player.name) {
               var player_socket = connection_for_player(player);
-              player_socket.kill(data.reason);
+              player_socket.close(data.reason);
               resp = "Player kicked";
             }
           });
@@ -355,7 +359,7 @@ function main() {
               conn.post([OP_SERVER_EXEC_RESP, err]);
               socket.write('server_message', {"message":err});
             } else {
-              io.sockets.emit('set_state', {"state":OP_WORLD_RECONNECT});
+              gameserver.sockets.emit('set_state', {"state":OP_WORLD_RECONNECT});
             }
           });
           resp = 'Loading map';
@@ -407,6 +411,10 @@ function main() {
           break;
       }
       socket.emit('exec_resp', {"resp":resp});
+    });
+    
+    socket.on('disconnect', function() {
+      socket.close();
     });
   });
 
@@ -480,18 +488,18 @@ function main() {
 
   world.on_player_died = function(player, old_entity, death_cause, killer) {
     //broadcast(OP_PLAYER_DIE, player.id, death_cause, killer ? killer.id : -1);
-    gameserver.sockets.emit('player_die', {"id":player.id, "death_cause":death_cause});
+    gameserver.sockets.emit('player_die', {"id":player.id, "death_cause":death_cause, "killer":killer ? killer.id : -1});
   }
 
   world.on_player_ready = function(player) {
     //broadcast(OP_PLAYER_INFO, player.id, 0, true);
-    gameserver.sockets.emit('player_info_change'); //FIX
+    gameserver.sockets.emit('player_info_change', {"id":player.id, "ready":true}); //FIX
   }
 
   world.on_player_name_changed = function(player, new_name, old_name) {
     player.name = get_unique_name(world.players, player.id, new_name);
     //broadcast(OP_PLAYER_INFO, player.id, 0, 0, player.name);
-    gameserver.sockets.emit('player_info_change'); //FIX
+    gameserver.sockets.emit('player_info_change', {"id":player.id, "name":player.name}); //FIX
   }
 
   world.on_player_fire = function(player, angle, pos, vel, powerup) {
@@ -582,7 +590,8 @@ function main() {
           //message.push(pack_vector(player.ship.pos), player.ship.angle,
           //                                             player.ship.action);
           //connection.queue(message);
-          socket.emit('player_state_change', { 
+          socket.emit('player_state_change', {
+            "id":id,
             vector:pack_vector(player.ship.pos), 
             angle:player.ship.angle, 
             action:player.ship.action 

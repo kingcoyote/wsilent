@@ -627,23 +627,55 @@ WPilotClient.prototype.join = function(url) {
       self.world.fire_player_cannon(data.player);
     });
     
-    socket.on('player_state', function() {
-      
+    socket.on('player_state_change', function(data) {
+      self.world.update_player_state(data.id, data.vector, data.angle, data.action);
+    });
+    
+    socket.on('player_die', function(data) {
+      self.world.kill_player(data.id, data.death_cause, data.killer);
+    });
+    
+    socket.on('player_connect', function(data) {
+      self.world.add_player(data.id, data.name);
+    });
+    
+    socket.on('player_info_change', function(data) {
+      self.world.update_player_info(data.id, data.ping, data.ready, data.name);
+    });
+    
+    socket.on('round_state_change', function(data){
+      self.world.set_round_state(data.state, data.winners);
+    });
+    
+    socket.on('powerup_spawn', function(data) {
+      self.world.spawn_powerup(data.id, data.type, data.pos);
+    });
+    
+    socket.on('powerup_die', function(data) {
+      self.world.kill_powerup(data.powerup_id, data.player_id);
+    });
+    
+    socket.on('player_disconnect', function(data){
+      self.world.remove_player(data.id);
+    });
+    
+    socket.on('player_say', function(data){
+      self.world.player_say(data.player_id, data.message);
     });
     
     /*
       this.PACKET_HANDLERS = {};
-      this.PACKET_HANDLERS[OP_ROUND_STATE] = this.set_round_state;
-      this.PACKET_HANDLERS[OP_PLAYER_CONNECT] = this.add_player;
-      this.PACKET_HANDLERS[OP_PLAYER_DISCONNECT] = this.remove_player;
-      this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
+      //this.PACKET_HANDLERS[OP_ROUND_STATE] = this.set_round_state;
+      //this.PACKET_HANDLERS[OP_PLAYER_CONNECT] = this.add_player;
+      //this.PACKET_HANDLERS[OP_PLAYER_DISCONNECT] = this.remove_player;
+      //this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
       //this.PACKET_HANDLERS[OP_PLAYER_SPAWN] = this.spawn_player;
-      this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
+      //this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
       //this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; 
-      this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
-      this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
-      this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
-      this.PACKET_HANDLERS[OP_POWERUP_DIE] = this.kill_powerup; 
+      //this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
+      //this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
+      //this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
+      //this.PACKET_HANDLERS[OP_POWERUP_DIE] = this.kill_powerup; 
     */
     
     /**
