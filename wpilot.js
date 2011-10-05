@@ -256,7 +256,7 @@ WPilotClient.prototype.log = function(msg, color) {
  */
 WPilotClient.prototype.exec = function() {
   //COMMANDS.call(null, [this].concat(Array.prototype.slice.call(arguments)));
-  socket.emit('exec', [this].concat(Array.prototype.slice.call(arguments)));
+  socket.emit('exec', Array.prototype.slice.call(arguments));
 };
 
 /**
@@ -665,6 +665,10 @@ WPilotClient.prototype.join = function(url) {
     
     socket.on('disconnect', function(data) {
       self.set_state(CLIENT_DISCONNECTED);
+    });
+    
+    socket.on('exec_resp', function(data) {
+      self.log(data.resp);
     });
     
     /*

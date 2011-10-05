@@ -190,7 +190,7 @@ function main() {
   
   gameserver.sockets.on('connection', function(socket) {
     socket.emit('return_server_info', shared.get_state());
-    sys.puts(socket);
+    
     // set up all that extra shit
     // need to get player and world in scope for some callbacks
     socket.set_state = function(new_state) {
@@ -343,18 +343,18 @@ function main() {
     
     socket.on('exec', function(data){
       var resp;
-      switch(data.command) {
-        case 'kick':
+      switch(data[0]) {
+        case 'sv_kick':
           world.forEachPlayer(function(player) {
-            if (player.name == data.player.name) {
+            if (player.name == data[1]) {
               var player_socket = connection_for_player(player);
-              player_socket.close(data.reason);
+              player_socket.close(data[2]);
               resp = "Player kicked";
             }
           });
           break;
-        case 'map':
-          load_map(data.path, false, function(err) {
+        case 'sv_map':
+          load_map(data[1], false, function(err) {
             if (err) {
               //conn.post([OP_SERVER_EXEC_RESP, err]);
               socket.write('server_message', {"message":err});
@@ -364,7 +364,7 @@ function main() {
           });
           resp = 'Loading map';
           break;
-        case 'warmup':
+        case 'sv_warmup':
           switch (world.r_state) {
             case ROUND_WARMUP:
               resp = 'Already in warmup mode';
@@ -378,7 +378,7 @@ function main() {
               break;
           }
           break;
-        case 'start':
+        case 'sv_start':
           switch (world.r_state) {
             case ROUND_WARMUP:
               world.set_round_state(ROUND_STARTING);
@@ -394,7 +394,7 @@ function main() {
               resp = 'Game has already finished';
           }
           break;
-        case 'restart':
+        case 'sv_restart':
           switch (world.r_state) {
             case ROUND_WARMUP:
             case ROUND_STARTING:
