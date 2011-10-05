@@ -169,6 +169,7 @@ function main() {
       world,
       sockets         = {},
       socket_id       = 0,
+      color_id        = 0,
       no_connections  = 0,
       gameloop        = null,
       world           = null,
@@ -202,8 +203,9 @@ function main() {
             return;
           }
   
-          while (sockets[++socket_id]);
-  
+          while (sockets[socket.id]);
+          
+          socket.color_id = ++color_id;
           socket.player = null;
           socket.player_name = null;
           socket.is_admin = false;
@@ -240,6 +242,7 @@ function main() {
           while (world.players[socket.id]);
   
           socket.player = world.add_player(socket.id, socket.player_name);
+          socket.player.color_id = this.color_id;
           
           info = {"id":socket.player.id};
           repr = world.get_repr();

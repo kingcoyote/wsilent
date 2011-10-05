@@ -976,7 +976,7 @@ Player.prototype.on_before_init = function() {
 };
 
 Player.prototype.on_after_init = function() {
-  this.color = PLAYER_COLORS[this.id] || COLOR_BRIGHT;
+  this.color = PLAYER_COLORS[this.color_id] || COLOR_BRIGHT;
 };
 
 World.prototype.on_before_init = function() {
