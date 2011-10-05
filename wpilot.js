@@ -671,6 +671,11 @@ WPilotClient.prototype.join = function(url) {
       self.log(data.resp);
     });
     
+    socket.on('world_reconnect', function(data) {
+      //self.set_world(null);
+      self.stop_gameloop();
+    });
+    
     /*
       this.PACKET_HANDLERS = {};
       //this.PACKET_HANDLERS[OP_ROUND_STATE] = this.set_round_state;

@@ -676,7 +676,7 @@ function main() {
               if (conn.state == JOINED) {
                 //conn.write(JSON.stringify([OP_WORLD_RECONNECT]));
                 conn.set_state(HANDSHAKING);
-                //connection.emit('world_reconnect'); //FIX
+                conn.emit('world_reconnect'); //FIX
               }
             }
           });
