@@ -504,7 +504,7 @@ function main() {
 
   world.on_player_fire = function(player, angle, pos, vel, powerup) {
    //broadcast(OP_PLAYER_FIRE, player); 
-   gameserver.sockets.emit('player_fire', {"player":player});
+   gameserver.sockets.emit('player_fire', {"player":player.id});
   }
 
   world.on_player_leave = function(player, reason) {
