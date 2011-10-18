@@ -255,7 +255,6 @@ WPilotClient.prototype.log = function(msg, color) {
  *  @return {undefined} Nothing
  */
 WPilotClient.prototype.exec = function() {
-  //COMMANDS.call(null, [this].concat(Array.prototype.slice.call(arguments)));
   socket.emit('exec', Array.prototype.slice.call(arguments));
 };
 
@@ -266,10 +265,6 @@ WPilotClient.prototype.exec = function() {
  */
 WPilotClient.prototype.chat = function(message) {
   if (this.state == CLIENT_CONNECTED) {
-    /*this.post_control_packet([OP_CLIENT_SAY,
-                              message.length > CHAT_MAX_CHARS ?
-                              message.substr(0, CHAT_MAX_CHARS) :
-                              message]);*/
     socket.emit('chat', {"message":message});
   }
 };;
@@ -421,12 +416,6 @@ WPilotClient.prototype.set_state = function(state) {
       break;
 
     case CLIENT_CONNECTED:
-      //this.log('Joined server ' + this.conn.URL + '...');
-      /*this.post_control_packet([OP_CLIENT_JOIN, {
-        name: this.options.name,
-        rate: this.options.rate,
-        dimensions: [this.viewport.w, this.viewport.h]
-      }]);*/
       socket.emit('join', {
         name: this.options.name,
         rate: this.options.rate,
@@ -483,7 +472,6 @@ WPilotClient.prototype.process_user_input = function(t, dt) {
   }
 
   if (input.toggle('ready')) {
-    //this.post_game_packet([OP_CLIENT_SET, 'ready']);
     socket.emit('set_ready');
   }
 
@@ -529,7 +517,6 @@ WPilotClient.prototype.process_user_input = function(t, dt) {
 
       player.action = new_action;
       player.ship.angle = new_angle;
-      //this.post_game_packet([OP_CLIENT_STATE, new_action, new_angle]);
       socket.emit('command_state_change', {"action":new_action, "angle":new_angle});
     }
   }
@@ -599,8 +586,6 @@ WPilotClient.prototype.join = function(url) {
   if (!self.is_connected) {
     self.disconnect_reason = 'Unknown reason';
     this.log('Trying to join server at ' + url + '...');
-    //self.socket = io.connect(url);
-    //self.conn = new WebSocket(url);
     
     this.set_state(CLIENT_CONNECTING);
     
@@ -672,89 +657,9 @@ WPilotClient.prototype.join = function(url) {
     });
     
     socket.on('world_reconnect', function(data) {
-      //self.set_world(null);
+      self.set_world(null);
       self.stop_gameloop();
     });
-    
-    /*
-      this.PACKET_HANDLERS = {};
-      //this.PACKET_HANDLERS[OP_ROUND_STATE] = this.set_round_state;
-      //this.PACKET_HANDLERS[OP_PLAYER_CONNECT] = this.add_player;
-      //this.PACKET_HANDLERS[OP_PLAYER_DISCONNECT] = this.remove_player;
-      //this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
-      //this.PACKET_HANDLERS[OP_PLAYER_SPAWN] = this.spawn_player;
-      //this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
-      //this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; 
-      //this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
-      //this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
-      //this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
-      //this.PACKET_HANDLERS[OP_POWERUP_DIE] = this.kill_powerup; 
-    */
-    
-    /**
-     *  Override the onopen event of the WebSocket instance.
-     *  @param {WebSocketEvent} event The websocket event object.
-     *  @returns {undefined} Nothing
-     */
-    /*self.conn.onopen = function(event){
-      self.is_connected = true;
-      self.set_state(CLIENT_CONNECTING);
-      setTimeout(function() {
-        self.conn.send(JSON.stringify([OP_REQ_SERVER_INFO]));
-      }, 100);
-    };*/
-
-    /**
-     *  Override the onmessage event of the WebSocket instance.
-     *  @param {WebSocketEvent} event The websocket event object.
-     *  @returns {undefined} Nothing
-     */
-    /*self.conn.onmessage = function(event) {
-      var packet        = JSON.parse(event.data);
-      switch (packet[0]) {
-
-        case PING_PACKET:
-          self.conn.send(JSON.stringify([PING_PACKET]));
-          break;
-
-        case GAME_PACKET:
-          if (!self.world) return;
-
-          var messages      = packet[1];
-
-          if (self.netstat.start_time) {
-            var now = get_time(),
-                alpha = 0;
-            if (self.netstat.last_received) {
-              self.netstat.last_received = now;
-            }
-            self.netstat.last_received = now;
-            self.netstat.bytes_received += event.data.length;
-            self.netstat.messages_received += 1;
-          }
-
-          for (var i = 0; i < messages.length; i++) {
-            self.world.process_world_packet(messages[i]);
-          }
-
-          break;
-
-
-        default:
-          process_control_message([packet, self]);
-          break;
-      }
-
-    };*/
-
-    /**
-     *  Override the onclose event of the WebSocket instance.
-     *  @param {WebSocketEvent} event The websocket event object.
-     *  @returns {undefined} Nothing
-     */
-    /*self.conn.onclose = function(event){
-      self.set_state(CLIENT_DISCONNECTED);
-    };*/
 
   }
 
@@ -768,30 +673,6 @@ WPilotClient.prototype.join = function(url) {
 WPilotClient.prototype.leave = function(reason) {
   this.disconnect_reason = reason;
   this.conn.close();
-};
-
-/**
- *  Post a game packet to server
- *  @param {String} msg The message that should be sent.
- *  @return {undefined} Nothing
- */
-WPilotClient.prototype.post_game_packet = function(msg) {
-  var packet = JSON.stringify([GAME_PACKET, msg]);
-  if (this.netstat.start_time) {
-    this.netstat.bytes_sent += packet.length;
-    this.netstat.messages_sent += 1;
-  }
-  this.conn.send(packet);
-};
-
-/**
- *  Post a control packet to server
- *  @param {String} msg The message that should be sent.
- *  @return {undefined} Nothing
- */
-WPilotClient.prototype.post_control_packet = function(msg) {
-  var packet = JSON.stringify(msg);
-  this.conn.send(packet);
 };
 
 /**
@@ -817,69 +698,6 @@ WPilotClient.prototype.update_netstat = function() {
     }
   }
 };
-
-/**
- *  Processes control message recieved from server.
- *
- */
-var process_control_message = match (
-  /**
-   *  The first message recieved from server on connect. Contains the
-   *  state of the server.
-   */
-  [[OP_SERVER_INFO, Object], _],
-  function(state, client) {
-    client.set_server_state(state);
-  },
-
-  /**
-   *  Is received after the client has sent a CLIENT CONNECT message. The message
-   *  contains all data necessary to set up the game world.
-   */
-  [[OP_WORLD_DATA, Object, Object], _],
-  function(map_data, rules, client) {
-    var world = new World(false);
-    world.build(map_data, rules);
-    client.log('World data loaded...');
-    client.set_world(world);
-    client.set_state(CLIENT_CONNECTED);
-  },
-
-  /*[[OP_WORLD_STATE, Number, Object, Array, Array], _],
-  function(my_id, state, players, powerups, client) {
-    client.world.set_state(state, players, powerups);
-    client.set_player(client.world.players[my_id]);
-    client.start_gameloop(client.world.tick);
-  },*/
-
-  [[OP_WORLD_RECONNECT], _],
-  function(client) {
-    client.set_world(null);
-    client.stop_gameloop();
-  },
-
-  /**
-   *  Is recieved when disconnected from server.
-   */
-  [[OP_DISCONNECT_REASON, String], _],
-  function(reason, client) {
-    client.disconnect_reason = reason;
-  },
-
-  /**
-   *  Is recieved when disconnected from server.
-   */
-  [[OP_SERVER_EXEC_RESP, String], _],
-  function(message, client) {
-    client.log(message);
-  },
-
-  function(msg) {
-    console.log('Unhandled message');
-    console.log(msg[0]);
-  }
-
-);
 
 var COMMANDS = match (
   [_, 'name', String], function(client, new_name) {
@@ -1158,18 +976,7 @@ World.prototype.on_powerup_die = function(powerup, player) {
 };
 
 World.prototype.on_after_init = function() {
-  this.PACKET_HANDLERS = {};
-  this.PACKET_HANDLERS[OP_ROUND_STATE] = this.set_round_state;
-  this.PACKET_HANDLERS[OP_PLAYER_CONNECT] = this.add_player;
-  this.PACKET_HANDLERS[OP_PLAYER_DISCONNECT] = this.remove_player;
-  this.PACKET_HANDLERS[OP_PLAYER_INFO] = this.update_player_info;
-  this.PACKET_HANDLERS[OP_PLAYER_SPAWN] = this.spawn_player;
-  this.PACKET_HANDLERS[OP_PLAYER_DIE] = this.kill_player;
-  this.PACKET_HANDLERS[OP_PLAYER_FIRE] = this.fire_player_cannon; 
-  this.PACKET_HANDLERS[OP_PLAYER_STATE] = this.update_player_state;
-  this.PACKET_HANDLERS[OP_PLAYER_SAY] = this.player_say;
-  this.PACKET_HANDLERS[OP_POWERUP_SPAWN] = this.spawn_powerup;
-  this.PACKET_HANDLERS[OP_POWERUP_DIE] = this.kill_powerup;
+  
 };
 
 World.prototype.play_animation = function(animation, callback) {
@@ -1182,16 +989,6 @@ World.prototype.play_animation = function(animation, callback) {
   });
 
   return id;
-};
-
-World.prototype.process_world_packet = function(msg) {;
-  var id = msg.shift();
-  var handler = this.PACKET_HANDLERS[id];
-  if (handler) {
-    handler.apply(this, msg);
-  } else {
-    console.log(id);
-  }
 };
 
 World.prototype.update_player_info = function(id, ping, ready, name) {

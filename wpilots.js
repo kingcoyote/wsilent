@@ -465,60 +465,41 @@ function main() {
 
   // Listen for round state changes
   world.on_round_state_changed = function(state, winners) {
-    //broadcast(OP_ROUND_STATE, state, winners);
     gameserver.sockets.emit('round_state_change', { "state":state,"winners":winners });
   }
 
   // Listen for events on player
   world.on_player_join = function(player) {
     player.name = get_unique_name(world.players, player.id, player.name);
-    /*broadcast_each(
-      [OP_PLAYER_CONNECT, player.id, player.name],
-      function(msg, conn) {
-        if (conn.player && conn.player.id == player.id) {
-          return PRIO_PASS;
-        }
-        return PRIO_HIGH;
-      }
-    );*/
     gameserver.sockets.emit('player_connect', { "id":player.id, "name":player.name });
   }
 
   world.on_player_spawn = function(player, pos) {
-    //broadcast(OP_PLAYER_SPAWN, player.id, pos);
     gameserver.sockets.emit('player_spawn', { "id":player.id, "pos":pos });
   }
 
   world.on_player_died = function(player, old_entity, death_cause, killer) {
-    //broadcast(OP_PLAYER_DIE, player.id, death_cause, killer ? killer.id : -1);
     gameserver.sockets.emit('player_die', {"id":player.id, "death_cause":death_cause, "killer":killer ? killer.id : -1});
   }
 
   world.on_player_ready = function(player) {
-    //broadcast(OP_PLAYER_INFO, player.id, 0, true);
     gameserver.sockets.emit('player_info_change', {"id":player.id, "ready":true}); //FIX
   }
 
   world.on_player_name_changed = function(player, new_name, old_name) {
     player.name = get_unique_name(world.players, player.id, new_name);
-    //broadcast(OP_PLAYER_INFO, player.id, 0, 0, player.name);
     gameserver.sockets.emit('player_info_change', {"id":player.id, "name":player.name}); //FIX
   }
 
   world.on_player_fire = function(player, angle, pos, vel, powerup) {
-   //broadcast(OP_PLAYER_FIRE, player); 
    gameserver.sockets.emit('player_fire', {"player":player.id});
   }
 
   world.on_player_leave = function(player, reason) {
-    //broadcast(OP_PLAYER_DISCONNECT, player.id, reason);
     gameserver.sockets.emit('player_disconnect', {"id":player.id, "reason":reason});
   }
 
   world.on_powerup_spawn = function(powerup) {
-    /*broadcast(OP_POWERUP_SPAWN, powerup.powerup_id,
-                               powerup.powerup_type,
-                               powerup.pos);*/
     gameserver.sockets.emit(
       'powerup_spawn', 
       {
@@ -530,7 +511,6 @@ function main() {
   }
 
   world.on_powerup_die = function(powerup, player) {
-    //broadcast(OP_POWERUP_DIE, powerup.powerup_id, player.id);
     gameserver.sockets.emit('powerup_die', {"powerup_id":powerup.powerup_id, "player_id":player.id});
   }
 
@@ -588,17 +568,13 @@ function main() {
       }
       for (var id in world.players) {
         var player = world.players[id];
-        //var message = [OP_PLAYER_STATE, player.id];
         if (player.ship) {
-          //message.push(pack_vector(player.ship.pos), player.ship.angle,
-          //                                             player.ship.action);
-          //connection.queue(message);
           socket.emit('player_state_change', {
             "id":id,
             vector:pack_vector(player.ship.pos), 
             angle:player.ship.angle, 
             action:player.ship.action 
-          }); //FIX
+          }); 
         }
         if (update_tick % 200 == 0) {
           var player_connection = connection_for_player(player);
@@ -608,22 +584,6 @@ function main() {
       }
     }
   }
-
-  /**
-   *  Flushes all connection queues.
-   *  @return {undefined} Nothing
-   */
-  /*function flush_queues() {
-    for (var id in connections) {
-      var connection = connections[id];
-
-      if (connection.state != JOINED) {
-        continue;
-      }
-
-      connection.flush_queue();
-    }
-  }*/
 
   /**
    *  Check game rules
