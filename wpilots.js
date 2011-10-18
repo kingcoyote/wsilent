@@ -677,9 +677,8 @@ function main() {
             for(var id in sockets) {
               var conn = sockets[id];
               if (conn.state == JOINED) {
-                //conn.write(JSON.stringify([OP_WORLD_RECONNECT]));
+                conn.emit('world_reconnect'); // FIX
                 conn.set_state(HANDSHAKING);
-                conn.emit('world_reconnect'); //FIX
               }
             }
           });
