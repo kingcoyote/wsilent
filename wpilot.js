@@ -1050,7 +1050,7 @@ World.prototype.on_player_fire = function(player, angle) {
   var volume = player.is_me ? 
         1 : 
         calculate_sfx_volume(this.client, player.ship.pos);
-  this.client.sound.play(player.ship.weapon.sound, volume); // WPN
+  this.client.sound.play(player.ship.weapon.get_sound(), volume); 
 }
 /**
  * Callback for player died
