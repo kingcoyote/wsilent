@@ -602,8 +602,7 @@ function main() {
         }
         if (update_tick % 200 == 0) {
           var player_connection = connection_for_player(player);
-          //connection.queue([OP_PLAYER_INFO, player.id, player_connection.ping]);
-          socket.emit('player_info_change', {"id":player.id, "ping":player_connection.ping }); //FIX
+          socket.emit('player_info_change', {"id":player.id, "ping":0 });
         }
 
       }
