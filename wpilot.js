@@ -699,6 +699,17 @@ WPilotClient.prototype.update_netstat = function() {
   }
 };
 
+try {
+  // server import of match
+  if (require) {
+    var match = require('./match').Match;
+  }
+} catch (_ex) {
+  // client import of match
+  var match = Match;
+  var _ = match.incl;
+}
+
 var COMMANDS = match (
   [_, 'name', String], function(client, new_name) {
     client.post_game_packet([OP_CLIENT_SET, 'name', new_name]);
